@@ -1,0 +1,19 @@
+syntax = "v1"
+
+// Schema 字段定义
+type FieldDef {
+	Name         string   `json:"name"`
+	Type         string   `json:"type"`                // string, int, float, bool, text, datetime, enum, json, array
+	Required     bool     `json:"required"`
+	MaxLength    int      `json:"maxLength,omitempty"`
+	DefaultValue string   `json:"defaultValue,omitempty"`
+	EnumValues   []string `json:"enumValues,omitempty"`
+	Description  string   `json:"description,omitempty"`
+}
+
+// 实体数据字段值
+type FieldValue {
+	Name  string `json:"name"`
+	Type  string `json:"type"`  // 与 FieldDef.Type 对应
+	Value string `json:"value"` // 值的字符串表示，后端根据 type 转换
+}

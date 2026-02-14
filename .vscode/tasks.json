@@ -1,0 +1,57 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "gen-api",
+            "type": "shell",
+            // "command": "goctl api go -style go_zero -api business.api -dir . --home ./template",
+            "command": "goctl api go -style go_zero -api forma.api -dir .",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+            },
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "create-orm-model",
+            "type": "shell",
+            "command": "go run -mod=mod entgo.io/ent/cmd/ent new ${input:modelName}",
+            "options": {
+                "cwd": "${workspaceFolder}/internal"
+            },
+            "group": {
+                "kind": "build",
+            },
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "gen-orm",
+            "type": "shell",
+            "command": "go run -mod=mod entgo.io/ent/cmd/ent generate --feature sql/upsert ./ent/schema",
+            "options": {
+                "cwd": "${workspaceFolder}/internal"
+            },
+            "group": {
+                "kind": "build",
+            },
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+    ],
+    "inputs": [
+        {
+            "id": "modelName",
+            "type": "promptString",
+            "description": "Please enter the model name"
+        }
+    ]
+}

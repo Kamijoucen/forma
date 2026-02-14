@@ -1,0 +1,49 @@
+syntax = "v1"
+
+import (
+	"api/schema.api"
+	"api/entity.api"
+)
+
+@server (
+	group:  schema
+	prefix: /api
+)
+service forma-api {
+	@handler SchemaCreateHandler
+	post /schema/create (SchemaCreateReq)
+
+	@handler SchemaUpdateHandler
+	post /schema/update (SchemaUpdateReq)
+
+	@handler SchemaDeleteHandler
+	post /schema/delete (SchemaDeleteReq)
+
+	@handler SchemaDetailHandler
+	get /schema/detail (SchemaDetailReq) returns (SchemaDetailResp)
+
+	@handler SchemaListHandler
+	get /schema/list returns (SchemaListResp)
+}
+
+@server (
+	group:  entity
+	prefix: /api
+)
+service forma-api {
+	@handler EntityCreateHandler
+	post /entity/create (EntityCreateReq) returns (EntityCreateResp)
+
+	@handler EntityUpdateHandler
+	post /entity/update (EntityUpdateReq)
+
+	@handler EntityDeleteHandler
+	post /entity/delete (EntityDeleteReq)
+
+	@handler EntityDetailHandler
+	get /entity/detail (EntityDetailReq) returns (EntityDetailResp)
+
+	@handler EntityListHandler
+	get /entity/list (EntityListReq) returns (EntityListResp)
+}
+

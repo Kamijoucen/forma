@@ -1,0 +1,37 @@
+syntax = "v1"
+
+import "common.api"
+
+type SchemaCreateReq {
+	Name        string     `json:"name"`
+	DisplayName string     `json:"displayName,omitempty"`
+	Fields      []FieldDef `json:"fields"`
+}
+
+type SchemaUpdateReq {
+	Name        string     `json:"name"`
+	DisplayName string     `json:"displayName,omitempty"`
+	Fields      []FieldDef `json:"fields"`
+}
+
+type SchemaDeleteReq {
+	Name string `json:"name"`
+}
+
+type SchemaDetailReq {
+	Name string `form:"name"`
+}
+
+type SchemaDetailResp {
+	Name        string     `json:"name"`
+	DisplayName string     `json:"displayName"`
+	Fields      []FieldDef `json:"fields"`
+	CreatedAt   string     `json:"createdAt"`
+	UpdatedAt   string     `json:"updatedAt"`
+}
+
+type SchemaListResp {
+	Total int64              `json:"total"`
+	List  []SchemaDetailResp `json:"list"`
+}
+
