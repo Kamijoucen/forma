@@ -3,18 +3,64 @@
 package ent
 
 import (
+	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schema"
-	"forma/internal/ent/todo"
+	"forma/internal/ent/schemadef"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	todoFields := schema.Todo{}.Fields()
-	_ = todoFields
-	// todoDescTitle is the schema descriptor for title field.
-	todoDescTitle := todoFields[0].Descriptor()
-	// todo.TitleValidator is a validator for the "title" field. It is called by the builders before save.
-	todo.TitleValidator = todoDescTitle.Validators[0].(func(string) error)
+	fielddefMixin := schema.FieldDef{}.Mixin()
+	fielddefMixinFields0 := fielddefMixin[0].Fields()
+	_ = fielddefMixinFields0
+	fielddefFields := schema.FieldDef{}.Fields()
+	_ = fielddefFields
+	// fielddefDescCreateTime is the schema descriptor for create_time field.
+	fielddefDescCreateTime := fielddefMixinFields0[0].Descriptor()
+	// fielddef.DefaultCreateTime holds the default value on creation for the create_time field.
+	fielddef.DefaultCreateTime = fielddefDescCreateTime.Default.(func() time.Time)
+	// fielddefDescUpdateTime is the schema descriptor for update_time field.
+	fielddefDescUpdateTime := fielddefMixinFields0[1].Descriptor()
+	// fielddef.DefaultUpdateTime holds the default value on creation for the update_time field.
+	fielddef.DefaultUpdateTime = fielddefDescUpdateTime.Default.(func() time.Time)
+	// fielddef.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	fielddef.UpdateDefaultUpdateTime = fielddefDescUpdateTime.UpdateDefault.(func() time.Time)
+	// fielddefDescName is the schema descriptor for name field.
+	fielddefDescName := fielddefFields[0].Descriptor()
+	// fielddef.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	fielddef.NameValidator = fielddefDescName.Validators[0].(func(string) error)
+	// fielddefDescRequired is the schema descriptor for required field.
+	fielddefDescRequired := fielddefFields[2].Descriptor()
+	// fielddef.DefaultRequired holds the default value on creation for the required field.
+	fielddef.DefaultRequired = fielddefDescRequired.Default.(bool)
+	// fielddefDescMaxLength is the schema descriptor for maxLength field.
+	fielddefDescMaxLength := fielddefFields[3].Descriptor()
+	// fielddef.DefaultMaxLength holds the default value on creation for the maxLength field.
+	fielddef.DefaultMaxLength = fielddefDescMaxLength.Default.(int)
+	// fielddefDescMinLength is the schema descriptor for minLength field.
+	fielddefDescMinLength := fielddefFields[4].Descriptor()
+	// fielddef.DefaultMinLength holds the default value on creation for the minLength field.
+	fielddef.DefaultMinLength = fielddefDescMinLength.Default.(int)
+	schemadefMixin := schema.SchemaDef{}.Mixin()
+	schemadefMixinFields0 := schemadefMixin[0].Fields()
+	_ = schemadefMixinFields0
+	schemadefFields := schema.SchemaDef{}.Fields()
+	_ = schemadefFields
+	// schemadefDescCreateTime is the schema descriptor for create_time field.
+	schemadefDescCreateTime := schemadefMixinFields0[0].Descriptor()
+	// schemadef.DefaultCreateTime holds the default value on creation for the create_time field.
+	schemadef.DefaultCreateTime = schemadefDescCreateTime.Default.(func() time.Time)
+	// schemadefDescUpdateTime is the schema descriptor for update_time field.
+	schemadefDescUpdateTime := schemadefMixinFields0[1].Descriptor()
+	// schemadef.DefaultUpdateTime holds the default value on creation for the update_time field.
+	schemadef.DefaultUpdateTime = schemadefDescUpdateTime.Default.(func() time.Time)
+	// schemadef.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	schemadef.UpdateDefaultUpdateTime = schemadefDescUpdateTime.UpdateDefault.(func() time.Time)
+	// schemadefDescName is the schema descriptor for name field.
+	schemadefDescName := schemadefFields[0].Descriptor()
+	// schemadef.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	schemadef.NameValidator = schemadefDescName.Validators[0].(func(string) error)
 }

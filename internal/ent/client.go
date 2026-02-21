@@ -11,11 +11,13 @@ import (
 
 	"forma/internal/ent/migrate"
 
-	"forma/internal/ent/todo"
+	"forma/internal/ent/fielddef"
+	"forma/internal/ent/schemadef"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -23,8 +25,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Todo is the client for interacting with the Todo builders.
-	Todo *TodoClient
+	// FieldDef is the client for interacting with the FieldDef builders.
+	FieldDef *FieldDefClient
+	// SchemaDef is the client for interacting with the SchemaDef builders.
+	SchemaDef *SchemaDefClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -36,7 +40,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Todo = NewTodoClient(c.config)
+	c.FieldDef = NewFieldDefClient(c.config)
+	c.SchemaDef = NewSchemaDefClient(c.config)
 }
 
 type (
@@ -127,9 +132,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Todo:   NewTodoClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		FieldDef:  NewFieldDefClient(cfg),
+		SchemaDef: NewSchemaDefClient(cfg),
 	}, nil
 }
 
@@ -147,16 +153,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Todo:   NewTodoClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		FieldDef:  NewFieldDefClient(cfg),
+		SchemaDef: NewSchemaDefClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Todo.
+//		FieldDef.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -178,126 +185,130 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Todo.Use(hooks...)
+	c.FieldDef.Use(hooks...)
+	c.SchemaDef.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Todo.Intercept(interceptors...)
+	c.FieldDef.Intercept(interceptors...)
+	c.SchemaDef.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *TodoMutation:
-		return c.Todo.mutate(ctx, m)
+	case *FieldDefMutation:
+		return c.FieldDef.mutate(ctx, m)
+	case *SchemaDefMutation:
+		return c.SchemaDef.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
 }
 
-// TodoClient is a client for the Todo schema.
-type TodoClient struct {
+// FieldDefClient is a client for the FieldDef schema.
+type FieldDefClient struct {
 	config
 }
 
-// NewTodoClient returns a client for the Todo from the given config.
-func NewTodoClient(c config) *TodoClient {
-	return &TodoClient{config: c}
+// NewFieldDefClient returns a client for the FieldDef from the given config.
+func NewFieldDefClient(c config) *FieldDefClient {
+	return &FieldDefClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `todo.Hooks(f(g(h())))`.
-func (c *TodoClient) Use(hooks ...Hook) {
-	c.hooks.Todo = append(c.hooks.Todo, hooks...)
+// A call to `Use(f, g, h)` equals to `fielddef.Hooks(f(g(h())))`.
+func (c *FieldDefClient) Use(hooks ...Hook) {
+	c.hooks.FieldDef = append(c.hooks.FieldDef, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `todo.Intercept(f(g(h())))`.
-func (c *TodoClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Todo = append(c.inters.Todo, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `fielddef.Intercept(f(g(h())))`.
+func (c *FieldDefClient) Intercept(interceptors ...Interceptor) {
+	c.inters.FieldDef = append(c.inters.FieldDef, interceptors...)
 }
 
-// Create returns a builder for creating a Todo entity.
-func (c *TodoClient) Create() *TodoCreate {
-	mutation := newTodoMutation(c.config, OpCreate)
-	return &TodoCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a FieldDef entity.
+func (c *FieldDefClient) Create() *FieldDefCreate {
+	mutation := newFieldDefMutation(c.config, OpCreate)
+	return &FieldDefCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Todo entities.
-func (c *TodoClient) CreateBulk(builders ...*TodoCreate) *TodoCreateBulk {
-	return &TodoCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of FieldDef entities.
+func (c *FieldDefClient) CreateBulk(builders ...*FieldDefCreate) *FieldDefCreateBulk {
+	return &FieldDefCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *TodoClient) MapCreateBulk(slice any, setFunc func(*TodoCreate, int)) *TodoCreateBulk {
+func (c *FieldDefClient) MapCreateBulk(slice any, setFunc func(*FieldDefCreate, int)) *FieldDefCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &TodoCreateBulk{err: fmt.Errorf("calling to TodoClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &FieldDefCreateBulk{err: fmt.Errorf("calling to FieldDefClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*TodoCreate, rv.Len())
+	builders := make([]*FieldDefCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &TodoCreateBulk{config: c.config, builders: builders}
+	return &FieldDefCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Todo.
-func (c *TodoClient) Update() *TodoUpdate {
-	mutation := newTodoMutation(c.config, OpUpdate)
-	return &TodoUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for FieldDef.
+func (c *FieldDefClient) Update() *FieldDefUpdate {
+	mutation := newFieldDefMutation(c.config, OpUpdate)
+	return &FieldDefUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TodoClient) UpdateOne(_m *Todo) *TodoUpdateOne {
-	mutation := newTodoMutation(c.config, OpUpdateOne, withTodo(_m))
-	return &TodoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *FieldDefClient) UpdateOne(_m *FieldDef) *FieldDefUpdateOne {
+	mutation := newFieldDefMutation(c.config, OpUpdateOne, withFieldDef(_m))
+	return &FieldDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TodoClient) UpdateOneID(id int) *TodoUpdateOne {
-	mutation := newTodoMutation(c.config, OpUpdateOne, withTodoID(id))
-	return &TodoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *FieldDefClient) UpdateOneID(id int) *FieldDefUpdateOne {
+	mutation := newFieldDefMutation(c.config, OpUpdateOne, withFieldDefID(id))
+	return &FieldDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Todo.
-func (c *TodoClient) Delete() *TodoDelete {
-	mutation := newTodoMutation(c.config, OpDelete)
-	return &TodoDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for FieldDef.
+func (c *FieldDefClient) Delete() *FieldDefDelete {
+	mutation := newFieldDefMutation(c.config, OpDelete)
+	return &FieldDefDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TodoClient) DeleteOne(_m *Todo) *TodoDeleteOne {
+func (c *FieldDefClient) DeleteOne(_m *FieldDef) *FieldDefDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TodoClient) DeleteOneID(id int) *TodoDeleteOne {
-	builder := c.Delete().Where(todo.ID(id))
+func (c *FieldDefClient) DeleteOneID(id int) *FieldDefDeleteOne {
+	builder := c.Delete().Where(fielddef.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &TodoDeleteOne{builder}
+	return &FieldDefDeleteOne{builder}
 }
 
-// Query returns a query builder for Todo.
-func (c *TodoClient) Query() *TodoQuery {
-	return &TodoQuery{
+// Query returns a query builder for FieldDef.
+func (c *FieldDefClient) Query() *FieldDefQuery {
+	return &FieldDefQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeTodo},
+		ctx:    &QueryContext{Type: TypeFieldDef},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Todo entity by its id.
-func (c *TodoClient) Get(ctx context.Context, id int) (*Todo, error) {
-	return c.Query().Where(todo.ID(id)).Only(ctx)
+// Get returns a FieldDef entity by its id.
+func (c *FieldDefClient) Get(ctx context.Context, id int) (*FieldDef, error) {
+	return c.Query().Where(fielddef.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TodoClient) GetX(ctx context.Context, id int) *Todo {
+func (c *FieldDefClient) GetX(ctx context.Context, id int) *FieldDef {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -305,37 +316,202 @@ func (c *TodoClient) GetX(ctx context.Context, id int) *Todo {
 	return obj
 }
 
+// QuerySchemaDef queries the schemaDef edge of a FieldDef.
+func (c *FieldDefClient) QuerySchemaDef(_m *FieldDef) *SchemaDefQuery {
+	query := (&SchemaDefClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fielddef.Table, fielddef.FieldID, id),
+			sqlgraph.To(schemadef.Table, schemadef.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, fielddef.SchemaDefTable, fielddef.SchemaDefColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
-func (c *TodoClient) Hooks() []Hook {
-	return c.hooks.Todo
+func (c *FieldDefClient) Hooks() []Hook {
+	return c.hooks.FieldDef
 }
 
 // Interceptors returns the client interceptors.
-func (c *TodoClient) Interceptors() []Interceptor {
-	return c.inters.Todo
+func (c *FieldDefClient) Interceptors() []Interceptor {
+	return c.inters.FieldDef
 }
 
-func (c *TodoClient) mutate(ctx context.Context, m *TodoMutation) (Value, error) {
+func (c *FieldDefClient) mutate(ctx context.Context, m *FieldDefMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&TodoCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FieldDefCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&TodoUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FieldDefUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&TodoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FieldDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&TodoDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&FieldDefDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Todo mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown FieldDef mutation op: %q", m.Op())
+	}
+}
+
+// SchemaDefClient is a client for the SchemaDef schema.
+type SchemaDefClient struct {
+	config
+}
+
+// NewSchemaDefClient returns a client for the SchemaDef from the given config.
+func NewSchemaDefClient(c config) *SchemaDefClient {
+	return &SchemaDefClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `schemadef.Hooks(f(g(h())))`.
+func (c *SchemaDefClient) Use(hooks ...Hook) {
+	c.hooks.SchemaDef = append(c.hooks.SchemaDef, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `schemadef.Intercept(f(g(h())))`.
+func (c *SchemaDefClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SchemaDef = append(c.inters.SchemaDef, interceptors...)
+}
+
+// Create returns a builder for creating a SchemaDef entity.
+func (c *SchemaDefClient) Create() *SchemaDefCreate {
+	mutation := newSchemaDefMutation(c.config, OpCreate)
+	return &SchemaDefCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SchemaDef entities.
+func (c *SchemaDefClient) CreateBulk(builders ...*SchemaDefCreate) *SchemaDefCreateBulk {
+	return &SchemaDefCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SchemaDefClient) MapCreateBulk(slice any, setFunc func(*SchemaDefCreate, int)) *SchemaDefCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SchemaDefCreateBulk{err: fmt.Errorf("calling to SchemaDefClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SchemaDefCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SchemaDefCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SchemaDef.
+func (c *SchemaDefClient) Update() *SchemaDefUpdate {
+	mutation := newSchemaDefMutation(c.config, OpUpdate)
+	return &SchemaDefUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SchemaDefClient) UpdateOne(_m *SchemaDef) *SchemaDefUpdateOne {
+	mutation := newSchemaDefMutation(c.config, OpUpdateOne, withSchemaDef(_m))
+	return &SchemaDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SchemaDefClient) UpdateOneID(id int) *SchemaDefUpdateOne {
+	mutation := newSchemaDefMutation(c.config, OpUpdateOne, withSchemaDefID(id))
+	return &SchemaDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SchemaDef.
+func (c *SchemaDefClient) Delete() *SchemaDefDelete {
+	mutation := newSchemaDefMutation(c.config, OpDelete)
+	return &SchemaDefDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SchemaDefClient) DeleteOne(_m *SchemaDef) *SchemaDefDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SchemaDefClient) DeleteOneID(id int) *SchemaDefDeleteOne {
+	builder := c.Delete().Where(schemadef.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SchemaDefDeleteOne{builder}
+}
+
+// Query returns a query builder for SchemaDef.
+func (c *SchemaDefClient) Query() *SchemaDefQuery {
+	return &SchemaDefQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSchemaDef},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SchemaDef entity by its id.
+func (c *SchemaDefClient) Get(ctx context.Context, id int) (*SchemaDef, error) {
+	return c.Query().Where(schemadef.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SchemaDefClient) GetX(ctx context.Context, id int) *SchemaDef {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryFieldDefs queries the fieldDefs edge of a SchemaDef.
+func (c *SchemaDefClient) QueryFieldDefs(_m *SchemaDef) *FieldDefQuery {
+	query := (&FieldDefClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(schemadef.Table, schemadef.FieldID, id),
+			sqlgraph.To(fielddef.Table, fielddef.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, schemadef.FieldDefsTable, schemadef.FieldDefsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SchemaDefClient) Hooks() []Hook {
+	return c.hooks.SchemaDef
+}
+
+// Interceptors returns the client interceptors.
+func (c *SchemaDefClient) Interceptors() []Interceptor {
+	return c.inters.SchemaDef
+}
+
+func (c *SchemaDefClient) mutate(ctx context.Context, m *SchemaDefMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SchemaDefCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SchemaDefUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SchemaDefUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SchemaDefDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SchemaDef mutation op: %q", m.Op())
 	}
 }
 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Todo []ent.Hook
+		FieldDef, SchemaDef []ent.Hook
 	}
 	inters struct {
-		Todo []ent.Interceptor
+		FieldDef, SchemaDef []ent.Interceptor
 	}
 )

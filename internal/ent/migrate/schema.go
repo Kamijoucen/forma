@@ -8,22 +8,54 @@ import (
 )
 
 var (
-	// TodosColumns holds the columns for the "todos" table.
-	TodosColumns = []*schema.Column{
+	// FieldDefsColumns holds the columns for the "field_defs" table.
+	FieldDefsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "title", Type: field.TypeString},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Nullable: true, Enums: []string{"string", "number", "boolean", "date"}},
+		{Name: "required", Type: field.TypeBool, Default: false},
+		{Name: "max_length", Type: field.TypeInt, Default: 500},
+		{Name: "min_length", Type: field.TypeInt, Default: 0},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "schema_def_field_defs", Type: field.TypeInt, Nullable: true},
 	}
-	// TodosTable holds the schema information for the "todos" table.
-	TodosTable = &schema.Table{
-		Name:       "todos",
-		Columns:    TodosColumns,
-		PrimaryKey: []*schema.Column{TodosColumns[0]},
+	// FieldDefsTable holds the schema information for the "field_defs" table.
+	FieldDefsTable = &schema.Table{
+		Name:       "field_defs",
+		Columns:    FieldDefsColumns,
+		PrimaryKey: []*schema.Column{FieldDefsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "field_defs_schema_defs_fieldDefs",
+				Columns:    []*schema.Column{FieldDefsColumns[9]},
+				RefColumns: []*schema.Column{SchemaDefsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// SchemaDefsColumns holds the columns for the "schema_defs" table.
+	SchemaDefsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+	}
+	// SchemaDefsTable holds the schema information for the "schema_defs" table.
+	SchemaDefsTable = &schema.Table{
+		Name:       "schema_defs",
+		Columns:    SchemaDefsColumns,
+		PrimaryKey: []*schema.Column{SchemaDefsColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		TodosTable,
+		FieldDefsTable,
+		SchemaDefsTable,
 	}
 )
 
 func init() {
+	FieldDefsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 }

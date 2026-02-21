@@ -6,7 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"forma/internal/ent/todo"
+	"forma/internal/ent/fielddef"
+	"forma/internal/ent/schemadef"
 	"reflect"
 	"sync"
 
@@ -73,7 +74,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			todo.Table: todo.ValidColumn,
+			fielddef.Table:  fielddef.ValidColumn,
+			schemadef.Table: schemadef.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

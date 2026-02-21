@@ -8,16 +8,28 @@ import (
 	"forma/internal/ent"
 )
 
-// The TodoFunc type is an adapter to allow the use of ordinary
-// function as Todo mutator.
-type TodoFunc func(context.Context, *ent.TodoMutation) (ent.Value, error)
+// The FieldDefFunc type is an adapter to allow the use of ordinary
+// function as FieldDef mutator.
+type FieldDefFunc func(context.Context, *ent.FieldDefMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f TodoFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TodoMutation); ok {
+func (f FieldDefFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.FieldDefMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TodoMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FieldDefMutation", m)
+}
+
+// The SchemaDefFunc type is an adapter to allow the use of ordinary
+// function as SchemaDef mutator.
+type SchemaDefFunc func(context.Context, *ent.SchemaDefMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SchemaDefFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SchemaDefMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SchemaDefMutation", m)
 }
 
 // Condition is a hook condition function.

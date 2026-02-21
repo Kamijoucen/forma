@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Todo is the predicate function for todo builders.
-type Todo func(*sql.Selector)
+// FieldDef is the predicate function for fielddef builders.
+type FieldDef func(*sql.Selector)
+
+// SchemaDef is the predicate function for schemadef builders.
+type SchemaDef func(*sql.Selector)

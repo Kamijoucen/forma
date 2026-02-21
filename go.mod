@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	entgo.io/ent v0.14.5
+	github.com/lib/pq v1.10.9
 	github.com/zeromicro/go-zero v1.9.4
 )
 

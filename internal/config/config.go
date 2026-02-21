@@ -7,4 +7,10 @@ import "github.com/zeromicro/go-zero/rest"
 
 type Config struct {
 	rest.RestConf
+	DB DBConf `json:"db"`
+}
+
+type DBConf struct {
+	Driver string `json:"driver"`
+	DSN    string `json:"dsn"`
 }

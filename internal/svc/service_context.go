@@ -4,8 +4,16 @@
 package svc
 
 import (
+	"context"
+	"fmt"
 	"forma/internal/config"
 	"forma/internal/ent"
+	"forma/internal/ent/migrate"
+	"strings"
+
+	"entgo.io/ent/dialect"
+	_ "github.com/lib/pq"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type ServiceContext struct {
@@ -27,6 +35,26 @@ func NewServiceContext(c config.Config) *ServiceContext {
 }
 
 func initDB(c config.Config) *ent.Client {
-	// TODO
-	return nil
+	driver := strings.TrimSpace(c.DB.Driver)
+	dsn := strings.TrimSpace(c.DB.DSN)
+	if driver == "" {
+		driver = "postgres"
+	}
+
+	if dsn == "" {
+		err := fmt.Errorf("db dsn is required")
+		logx.Errorf("init db failed: %v", err)
+		panic(err)
+	}
+
+	client, err := ent.Open(dialect.Postgres, dsn)
+	if err != nil {
+		logx.Errorf("init db failed, driver=%s err=%v", driver, err)
+		panic(err)
+	}
+	if err := client.Schema.Create(context.Background(), migrate.WithDropIndex(true)); err != nil {
+		panic(err)
+	}
+
+	return client
 }

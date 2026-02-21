@@ -4,34 +4,34 @@ package ent
 
 import (
 	"context"
+	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
-	"forma/internal/ent/todo"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
 
-// TodoDelete is the builder for deleting a Todo entity.
-type TodoDelete struct {
+// FieldDefDelete is the builder for deleting a FieldDef entity.
+type FieldDefDelete struct {
 	config
 	hooks    []Hook
-	mutation *TodoMutation
+	mutation *FieldDefMutation
 }
 
-// Where appends a list predicates to the TodoDelete builder.
-func (_d *TodoDelete) Where(ps ...predicate.Todo) *TodoDelete {
+// Where appends a list predicates to the FieldDefDelete builder.
+func (_d *FieldDefDelete) Where(ps ...predicate.FieldDef) *FieldDefDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *TodoDelete) Exec(ctx context.Context) (int, error) {
+func (_d *FieldDefDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TodoDelete) ExecX(ctx context.Context) int {
+func (_d *FieldDefDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *TodoDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *TodoDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(todo.Table, sqlgraph.NewFieldSpec(todo.FieldID, field.TypeInt))
+func (_d *FieldDefDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(fielddef.Table, sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *TodoDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// TodoDeleteOne is the builder for deleting a single Todo entity.
-type TodoDeleteOne struct {
-	_d *TodoDelete
+// FieldDefDeleteOne is the builder for deleting a single FieldDef entity.
+type FieldDefDeleteOne struct {
+	_d *FieldDefDelete
 }
 
-// Where appends a list predicates to the TodoDelete builder.
-func (_d *TodoDeleteOne) Where(ps ...predicate.Todo) *TodoDeleteOne {
+// Where appends a list predicates to the FieldDefDelete builder.
+func (_d *FieldDefDeleteOne) Where(ps ...predicate.FieldDef) *FieldDefDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *TodoDeleteOne) Exec(ctx context.Context) error {
+func (_d *FieldDefDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{todo.Label}
+		return &NotFoundError{fielddef.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TodoDeleteOne) ExecX(ctx context.Context) {
+func (_d *FieldDefDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

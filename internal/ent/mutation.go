@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
-	"forma/internal/ent/todo"
+	"forma/internal/ent/schemadef"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -23,33 +25,45 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeTodo = "Todo"
+	TypeFieldDef  = "FieldDef"
+	TypeSchemaDef = "SchemaDef"
 )
 
-// TodoMutation represents an operation that mutates the Todo nodes in the graph.
-type TodoMutation struct {
+// FieldDefMutation represents an operation that mutates the FieldDef nodes in the graph.
+type FieldDefMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	title         *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Todo, error)
-	predicates    []predicate.Todo
+	op               Op
+	typ              string
+	id               *int
+	create_time      *time.Time
+	update_time      *time.Time
+	name             *string
+	_type            *fielddef.Type
+	required         *bool
+	maxLength        *int
+	addmaxLength     *int
+	minLength        *int
+	addminLength     *int
+	description      *string
+	clearedFields    map[string]struct{}
+	schemaDef        *int
+	clearedschemaDef bool
+	done             bool
+	oldValue         func(context.Context) (*FieldDef, error)
+	predicates       []predicate.FieldDef
 }
 
-var _ ent.Mutation = (*TodoMutation)(nil)
+var _ ent.Mutation = (*FieldDefMutation)(nil)
 
-// todoOption allows management of the mutation configuration using functional options.
-type todoOption func(*TodoMutation)
+// fielddefOption allows management of the mutation configuration using functional options.
+type fielddefOption func(*FieldDefMutation)
 
-// newTodoMutation creates new mutation for the Todo entity.
-func newTodoMutation(c config, op Op, opts ...todoOption) *TodoMutation {
-	m := &TodoMutation{
+// newFieldDefMutation creates new mutation for the FieldDef entity.
+func newFieldDefMutation(c config, op Op, opts ...fielddefOption) *FieldDefMutation {
+	m := &FieldDefMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeTodo,
+		typ:           TypeFieldDef,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -58,20 +72,20 @@ func newTodoMutation(c config, op Op, opts ...todoOption) *TodoMutation {
 	return m
 }
 
-// withTodoID sets the ID field of the mutation.
-func withTodoID(id int) todoOption {
-	return func(m *TodoMutation) {
+// withFieldDefID sets the ID field of the mutation.
+func withFieldDefID(id int) fielddefOption {
+	return func(m *FieldDefMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *Todo
+			value *FieldDef
 		)
-		m.oldValue = func(ctx context.Context) (*Todo, error) {
+		m.oldValue = func(ctx context.Context) (*FieldDef, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().Todo.Get(ctx, id)
+					value, err = m.Client().FieldDef.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -80,10 +94,10 @@ func withTodoID(id int) todoOption {
 	}
 }
 
-// withTodo sets the old Todo of the mutation.
-func withTodo(node *Todo) todoOption {
-	return func(m *TodoMutation) {
-		m.oldValue = func(context.Context) (*Todo, error) {
+// withFieldDef sets the old FieldDef of the mutation.
+func withFieldDef(node *FieldDef) fielddefOption {
+	return func(m *FieldDefMutation) {
+		m.oldValue = func(context.Context) (*FieldDef, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -92,7 +106,7 @@ func withTodo(node *Todo) todoOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m TodoMutation) Client() *Client {
+func (m FieldDefMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -100,7 +114,7 @@ func (m TodoMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m TodoMutation) Tx() (*Tx, error) {
+func (m FieldDefMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -111,7 +125,7 @@ func (m TodoMutation) Tx() (*Tx, error) {
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *TodoMutation) ID() (id int, exists bool) {
+func (m *FieldDefMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -122,7 +136,7 @@ func (m *TodoMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *TodoMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *FieldDefMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -131,57 +145,414 @@ func (m *TodoMutation) IDs(ctx context.Context) ([]int, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Todo.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().FieldDef.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
-// SetTitle sets the "title" field.
-func (m *TodoMutation) SetTitle(s string) {
-	m.title = &s
+// SetCreateTime sets the "create_time" field.
+func (m *FieldDefMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
 }
 
-// Title returns the value of the "title" field in the mutation.
-func (m *TodoMutation) Title() (r string, exists bool) {
-	v := m.title
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *FieldDefMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldTitle returns the old "title" field's value of the Todo entity.
-// If the Todo object wasn't provided to the builder, the object is fetched from the database.
+// OldCreateTime returns the old "create_time" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TodoMutation) OldTitle(ctx context.Context) (v string, err error) {
+func (m *FieldDefMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTitle requires an ID field in the mutation")
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
 	}
-	return oldValue.Title, nil
+	return oldValue.CreateTime, nil
 }
 
-// ResetTitle resets all changes to the "title" field.
-func (m *TodoMutation) ResetTitle() {
-	m.title = nil
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *FieldDefMutation) ResetCreateTime() {
+	m.create_time = nil
 }
 
-// Where appends a list predicates to the TodoMutation builder.
-func (m *TodoMutation) Where(ps ...predicate.Todo) {
+// SetUpdateTime sets the "update_time" field.
+func (m *FieldDefMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *FieldDefMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *FieldDefMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *FieldDefMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *FieldDefMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *FieldDefMutation) ResetName() {
+	m.name = nil
+}
+
+// SetType sets the "type" field.
+func (m *FieldDefMutation) SetType(f fielddef.Type) {
+	m._type = &f
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *FieldDefMutation) GetType() (r fielddef.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldType(ctx context.Context) (v fielddef.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ClearType clears the value of the "type" field.
+func (m *FieldDefMutation) ClearType() {
+	m._type = nil
+	m.clearedFields[fielddef.FieldType] = struct{}{}
+}
+
+// TypeCleared returns if the "type" field was cleared in this mutation.
+func (m *FieldDefMutation) TypeCleared() bool {
+	_, ok := m.clearedFields[fielddef.FieldType]
+	return ok
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *FieldDefMutation) ResetType() {
+	m._type = nil
+	delete(m.clearedFields, fielddef.FieldType)
+}
+
+// SetRequired sets the "required" field.
+func (m *FieldDefMutation) SetRequired(b bool) {
+	m.required = &b
+}
+
+// Required returns the value of the "required" field in the mutation.
+func (m *FieldDefMutation) Required() (r bool, exists bool) {
+	v := m.required
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRequired returns the old "required" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldRequired(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRequired is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRequired requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRequired: %w", err)
+	}
+	return oldValue.Required, nil
+}
+
+// ResetRequired resets all changes to the "required" field.
+func (m *FieldDefMutation) ResetRequired() {
+	m.required = nil
+}
+
+// SetMaxLength sets the "maxLength" field.
+func (m *FieldDefMutation) SetMaxLength(i int) {
+	m.maxLength = &i
+	m.addmaxLength = nil
+}
+
+// MaxLength returns the value of the "maxLength" field in the mutation.
+func (m *FieldDefMutation) MaxLength() (r int, exists bool) {
+	v := m.maxLength
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxLength returns the old "maxLength" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldMaxLength(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxLength is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxLength requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxLength: %w", err)
+	}
+	return oldValue.MaxLength, nil
+}
+
+// AddMaxLength adds i to the "maxLength" field.
+func (m *FieldDefMutation) AddMaxLength(i int) {
+	if m.addmaxLength != nil {
+		*m.addmaxLength += i
+	} else {
+		m.addmaxLength = &i
+	}
+}
+
+// AddedMaxLength returns the value that was added to the "maxLength" field in this mutation.
+func (m *FieldDefMutation) AddedMaxLength() (r int, exists bool) {
+	v := m.addmaxLength
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMaxLength resets all changes to the "maxLength" field.
+func (m *FieldDefMutation) ResetMaxLength() {
+	m.maxLength = nil
+	m.addmaxLength = nil
+}
+
+// SetMinLength sets the "minLength" field.
+func (m *FieldDefMutation) SetMinLength(i int) {
+	m.minLength = &i
+	m.addminLength = nil
+}
+
+// MinLength returns the value of the "minLength" field in the mutation.
+func (m *FieldDefMutation) MinLength() (r int, exists bool) {
+	v := m.minLength
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMinLength returns the old "minLength" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldMinLength(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMinLength is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMinLength requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMinLength: %w", err)
+	}
+	return oldValue.MinLength, nil
+}
+
+// AddMinLength adds i to the "minLength" field.
+func (m *FieldDefMutation) AddMinLength(i int) {
+	if m.addminLength != nil {
+		*m.addminLength += i
+	} else {
+		m.addminLength = &i
+	}
+}
+
+// AddedMinLength returns the value that was added to the "minLength" field in this mutation.
+func (m *FieldDefMutation) AddedMinLength() (r int, exists bool) {
+	v := m.addminLength
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMinLength resets all changes to the "minLength" field.
+func (m *FieldDefMutation) ResetMinLength() {
+	m.minLength = nil
+	m.addminLength = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *FieldDefMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *FieldDefMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *FieldDefMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[fielddef.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *FieldDefMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[fielddef.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *FieldDefMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, fielddef.FieldDescription)
+}
+
+// SetSchemaDefID sets the "schemaDef" edge to the SchemaDef entity by id.
+func (m *FieldDefMutation) SetSchemaDefID(id int) {
+	m.schemaDef = &id
+}
+
+// ClearSchemaDef clears the "schemaDef" edge to the SchemaDef entity.
+func (m *FieldDefMutation) ClearSchemaDef() {
+	m.clearedschemaDef = true
+}
+
+// SchemaDefCleared reports if the "schemaDef" edge to the SchemaDef entity was cleared.
+func (m *FieldDefMutation) SchemaDefCleared() bool {
+	return m.clearedschemaDef
+}
+
+// SchemaDefID returns the "schemaDef" edge ID in the mutation.
+func (m *FieldDefMutation) SchemaDefID() (id int, exists bool) {
+	if m.schemaDef != nil {
+		return *m.schemaDef, true
+	}
+	return
+}
+
+// SchemaDefIDs returns the "schemaDef" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SchemaDefID instead. It exists only for internal usage by the builders.
+func (m *FieldDefMutation) SchemaDefIDs() (ids []int) {
+	if id := m.schemaDef; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSchemaDef resets all changes to the "schemaDef" edge.
+func (m *FieldDefMutation) ResetSchemaDef() {
+	m.schemaDef = nil
+	m.clearedschemaDef = false
+}
+
+// Where appends a list predicates to the FieldDefMutation builder.
+func (m *FieldDefMutation) Where(ps ...predicate.FieldDef) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the TodoMutation builder. Using this method,
+// WhereP appends storage-level predicates to the FieldDefMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *TodoMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Todo, len(ps))
+func (m *FieldDefMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.FieldDef, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -189,27 +560,48 @@ func (m *TodoMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *TodoMutation) Op() Op {
+func (m *FieldDefMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *TodoMutation) SetOp(op Op) {
+func (m *FieldDefMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (Todo).
-func (m *TodoMutation) Type() string {
+// Type returns the node type of this mutation (FieldDef).
+func (m *FieldDefMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *TodoMutation) Fields() []string {
-	fields := make([]string, 0, 1)
-	if m.title != nil {
-		fields = append(fields, todo.FieldTitle)
+func (m *FieldDefMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.create_time != nil {
+		fields = append(fields, fielddef.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, fielddef.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, fielddef.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, fielddef.FieldType)
+	}
+	if m.required != nil {
+		fields = append(fields, fielddef.FieldRequired)
+	}
+	if m.maxLength != nil {
+		fields = append(fields, fielddef.FieldMaxLength)
+	}
+	if m.minLength != nil {
+		fields = append(fields, fielddef.FieldMinLength)
+	}
+	if m.description != nil {
+		fields = append(fields, fielddef.FieldDescription)
 	}
 	return fields
 }
@@ -217,10 +609,24 @@ func (m *TodoMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *TodoMutation) Field(name string) (ent.Value, bool) {
+func (m *FieldDefMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case todo.FieldTitle:
-		return m.Title()
+	case fielddef.FieldCreateTime:
+		return m.CreateTime()
+	case fielddef.FieldUpdateTime:
+		return m.UpdateTime()
+	case fielddef.FieldName:
+		return m.Name()
+	case fielddef.FieldType:
+		return m.GetType()
+	case fielddef.FieldRequired:
+		return m.Required()
+	case fielddef.FieldMaxLength:
+		return m.MaxLength()
+	case fielddef.FieldMinLength:
+		return m.MinLength()
+	case fielddef.FieldDescription:
+		return m.Description()
 	}
 	return nil, false
 }
@@ -228,126 +634,881 @@ func (m *TodoMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *TodoMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *FieldDefMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case todo.FieldTitle:
-		return m.OldTitle(ctx)
+	case fielddef.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case fielddef.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case fielddef.FieldName:
+		return m.OldName(ctx)
+	case fielddef.FieldType:
+		return m.OldType(ctx)
+	case fielddef.FieldRequired:
+		return m.OldRequired(ctx)
+	case fielddef.FieldMaxLength:
+		return m.OldMaxLength(ctx)
+	case fielddef.FieldMinLength:
+		return m.OldMinLength(ctx)
+	case fielddef.FieldDescription:
+		return m.OldDescription(ctx)
 	}
-	return nil, fmt.Errorf("unknown Todo field %s", name)
+	return nil, fmt.Errorf("unknown FieldDef field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *TodoMutation) SetField(name string, value ent.Value) error {
+func (m *FieldDefMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case todo.FieldTitle:
+	case fielddef.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case fielddef.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case fielddef.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetTitle(v)
+		m.SetName(v)
+		return nil
+	case fielddef.FieldType:
+		v, ok := value.(fielddef.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case fielddef.FieldRequired:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRequired(v)
+		return nil
+	case fielddef.FieldMaxLength:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxLength(v)
+		return nil
+	case fielddef.FieldMinLength:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMinLength(v)
+		return nil
+	case fielddef.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Todo field %s", name)
+	return fmt.Errorf("unknown FieldDef field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *TodoMutation) AddedFields() []string {
-	return nil
+func (m *FieldDefMutation) AddedFields() []string {
+	var fields []string
+	if m.addmaxLength != nil {
+		fields = append(fields, fielddef.FieldMaxLength)
+	}
+	if m.addminLength != nil {
+		fields = append(fields, fielddef.FieldMinLength)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *TodoMutation) AddedField(name string) (ent.Value, bool) {
+func (m *FieldDefMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case fielddef.FieldMaxLength:
+		return m.AddedMaxLength()
+	case fielddef.FieldMinLength:
+		return m.AddedMinLength()
+	}
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *TodoMutation) AddField(name string, value ent.Value) error {
+func (m *FieldDefMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case fielddef.FieldMaxLength:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxLength(v)
+		return nil
+	case fielddef.FieldMinLength:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMinLength(v)
+		return nil
 	}
-	return fmt.Errorf("unknown Todo numeric field %s", name)
+	return fmt.Errorf("unknown FieldDef numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *TodoMutation) ClearedFields() []string {
-	return nil
+func (m *FieldDefMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(fielddef.FieldType) {
+		fields = append(fields, fielddef.FieldType)
+	}
+	if m.FieldCleared(fielddef.FieldDescription) {
+		fields = append(fields, fielddef.FieldDescription)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *TodoMutation) FieldCleared(name string) bool {
+func (m *FieldDefMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *TodoMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Todo nullable field %s", name)
+func (m *FieldDefMutation) ClearField(name string) error {
+	switch name {
+	case fielddef.FieldType:
+		m.ClearType()
+		return nil
+	case fielddef.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown FieldDef nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *TodoMutation) ResetField(name string) error {
+func (m *FieldDefMutation) ResetField(name string) error {
 	switch name {
-	case todo.FieldTitle:
-		m.ResetTitle()
+	case fielddef.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case fielddef.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case fielddef.FieldName:
+		m.ResetName()
+		return nil
+	case fielddef.FieldType:
+		m.ResetType()
+		return nil
+	case fielddef.FieldRequired:
+		m.ResetRequired()
+		return nil
+	case fielddef.FieldMaxLength:
+		m.ResetMaxLength()
+		return nil
+	case fielddef.FieldMinLength:
+		m.ResetMinLength()
+		return nil
+	case fielddef.FieldDescription:
+		m.ResetDescription()
 		return nil
 	}
-	return fmt.Errorf("unknown Todo field %s", name)
+	return fmt.Errorf("unknown FieldDef field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *TodoMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *FieldDefMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.schemaDef != nil {
+		edges = append(edges, fielddef.EdgeSchemaDef)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *TodoMutation) AddedIDs(name string) []ent.Value {
+func (m *FieldDefMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case fielddef.EdgeSchemaDef:
+		if id := m.schemaDef; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *TodoMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *FieldDefMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *TodoMutation) RemovedIDs(name string) []ent.Value {
+func (m *FieldDefMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *TodoMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+func (m *FieldDefMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedschemaDef {
+		edges = append(edges, fielddef.EdgeSchemaDef)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *TodoMutation) EdgeCleared(name string) bool {
+func (m *FieldDefMutation) EdgeCleared(name string) bool {
+	switch name {
+	case fielddef.EdgeSchemaDef:
+		return m.clearedschemaDef
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *TodoMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown Todo unique edge %s", name)
+func (m *FieldDefMutation) ClearEdge(name string) error {
+	switch name {
+	case fielddef.EdgeSchemaDef:
+		m.ClearSchemaDef()
+		return nil
+	}
+	return fmt.Errorf("unknown FieldDef unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *TodoMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown Todo edge %s", name)
+func (m *FieldDefMutation) ResetEdge(name string) error {
+	switch name {
+	case fielddef.EdgeSchemaDef:
+		m.ResetSchemaDef()
+		return nil
+	}
+	return fmt.Errorf("unknown FieldDef edge %s", name)
+}
+
+// SchemaDefMutation represents an operation that mutates the SchemaDef nodes in the graph.
+type SchemaDefMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	create_time      *time.Time
+	update_time      *time.Time
+	name             *string
+	description      *string
+	clearedFields    map[string]struct{}
+	fieldDefs        map[int]struct{}
+	removedfieldDefs map[int]struct{}
+	clearedfieldDefs bool
+	done             bool
+	oldValue         func(context.Context) (*SchemaDef, error)
+	predicates       []predicate.SchemaDef
+}
+
+var _ ent.Mutation = (*SchemaDefMutation)(nil)
+
+// schemadefOption allows management of the mutation configuration using functional options.
+type schemadefOption func(*SchemaDefMutation)
+
+// newSchemaDefMutation creates new mutation for the SchemaDef entity.
+func newSchemaDefMutation(c config, op Op, opts ...schemadefOption) *SchemaDefMutation {
+	m := &SchemaDefMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSchemaDef,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSchemaDefID sets the ID field of the mutation.
+func withSchemaDefID(id int) schemadefOption {
+	return func(m *SchemaDefMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SchemaDef
+		)
+		m.oldValue = func(ctx context.Context) (*SchemaDef, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SchemaDef.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSchemaDef sets the old SchemaDef of the mutation.
+func withSchemaDef(node *SchemaDef) schemadefOption {
+	return func(m *SchemaDefMutation) {
+		m.oldValue = func(context.Context) (*SchemaDef, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SchemaDefMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SchemaDefMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SchemaDefMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SchemaDefMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SchemaDef.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *SchemaDefMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *SchemaDefMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the SchemaDef entity.
+// If the SchemaDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SchemaDefMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *SchemaDefMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *SchemaDefMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *SchemaDefMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the SchemaDef entity.
+// If the SchemaDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SchemaDefMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *SchemaDefMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *SchemaDefMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *SchemaDefMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the SchemaDef entity.
+// If the SchemaDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SchemaDefMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *SchemaDefMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *SchemaDefMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *SchemaDefMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the SchemaDef entity.
+// If the SchemaDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SchemaDefMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *SchemaDefMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[schemadef.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *SchemaDefMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[schemadef.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *SchemaDefMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, schemadef.FieldDescription)
+}
+
+// AddFieldDefIDs adds the "fieldDefs" edge to the FieldDef entity by ids.
+func (m *SchemaDefMutation) AddFieldDefIDs(ids ...int) {
+	if m.fieldDefs == nil {
+		m.fieldDefs = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.fieldDefs[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFieldDefs clears the "fieldDefs" edge to the FieldDef entity.
+func (m *SchemaDefMutation) ClearFieldDefs() {
+	m.clearedfieldDefs = true
+}
+
+// FieldDefsCleared reports if the "fieldDefs" edge to the FieldDef entity was cleared.
+func (m *SchemaDefMutation) FieldDefsCleared() bool {
+	return m.clearedfieldDefs
+}
+
+// RemoveFieldDefIDs removes the "fieldDefs" edge to the FieldDef entity by IDs.
+func (m *SchemaDefMutation) RemoveFieldDefIDs(ids ...int) {
+	if m.removedfieldDefs == nil {
+		m.removedfieldDefs = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.fieldDefs, ids[i])
+		m.removedfieldDefs[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFieldDefs returns the removed IDs of the "fieldDefs" edge to the FieldDef entity.
+func (m *SchemaDefMutation) RemovedFieldDefsIDs() (ids []int) {
+	for id := range m.removedfieldDefs {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FieldDefsIDs returns the "fieldDefs" edge IDs in the mutation.
+func (m *SchemaDefMutation) FieldDefsIDs() (ids []int) {
+	for id := range m.fieldDefs {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFieldDefs resets all changes to the "fieldDefs" edge.
+func (m *SchemaDefMutation) ResetFieldDefs() {
+	m.fieldDefs = nil
+	m.clearedfieldDefs = false
+	m.removedfieldDefs = nil
+}
+
+// Where appends a list predicates to the SchemaDefMutation builder.
+func (m *SchemaDefMutation) Where(ps ...predicate.SchemaDef) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SchemaDefMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SchemaDefMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SchemaDef, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SchemaDefMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SchemaDefMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SchemaDef).
+func (m *SchemaDefMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SchemaDefMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.create_time != nil {
+		fields = append(fields, schemadef.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, schemadef.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, schemadef.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, schemadef.FieldDescription)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SchemaDefMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case schemadef.FieldCreateTime:
+		return m.CreateTime()
+	case schemadef.FieldUpdateTime:
+		return m.UpdateTime()
+	case schemadef.FieldName:
+		return m.Name()
+	case schemadef.FieldDescription:
+		return m.Description()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SchemaDefMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case schemadef.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case schemadef.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case schemadef.FieldName:
+		return m.OldName(ctx)
+	case schemadef.FieldDescription:
+		return m.OldDescription(ctx)
+	}
+	return nil, fmt.Errorf("unknown SchemaDef field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SchemaDefMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case schemadef.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case schemadef.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case schemadef.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case schemadef.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SchemaDef field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SchemaDefMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SchemaDefMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SchemaDefMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SchemaDef numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SchemaDefMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(schemadef.FieldDescription) {
+		fields = append(fields, schemadef.FieldDescription)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SchemaDefMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SchemaDefMutation) ClearField(name string) error {
+	switch name {
+	case schemadef.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown SchemaDef nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SchemaDefMutation) ResetField(name string) error {
+	switch name {
+	case schemadef.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case schemadef.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case schemadef.FieldName:
+		m.ResetName()
+		return nil
+	case schemadef.FieldDescription:
+		m.ResetDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown SchemaDef field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SchemaDefMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.fieldDefs != nil {
+		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SchemaDefMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case schemadef.EdgeFieldDefs:
+		ids := make([]ent.Value, 0, len(m.fieldDefs))
+		for id := range m.fieldDefs {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SchemaDefMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedfieldDefs != nil {
+		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SchemaDefMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case schemadef.EdgeFieldDefs:
+		ids := make([]ent.Value, 0, len(m.removedfieldDefs))
+		for id := range m.removedfieldDefs {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SchemaDefMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedfieldDefs {
+		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SchemaDefMutation) EdgeCleared(name string) bool {
+	switch name {
+	case schemadef.EdgeFieldDefs:
+		return m.clearedfieldDefs
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SchemaDefMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SchemaDef unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SchemaDefMutation) ResetEdge(name string) error {
+	switch name {
+	case schemadef.EdgeFieldDefs:
+		m.ResetFieldDefs()
+		return nil
+	}
+	return fmt.Errorf("unknown SchemaDef edge %s", name)
 }
