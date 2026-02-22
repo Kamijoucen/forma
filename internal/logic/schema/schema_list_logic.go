@@ -6,6 +6,7 @@ package schema
 import (
 	"context"
 
+	"forma/internal/service"
 	"forma/internal/svc"
 	"forma/internal/types"
 
@@ -27,7 +28,20 @@ func NewSchemaListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Schema
 }
 
 func (l *SchemaListLogic) SchemaList() (resp *types.SchemaListResp, err error) {
-	// todo: add your logic here and delete this line
+	list, err := l.svcCtx.Ent.SchemaDef.
+		Query().
+		WithFieldDefs().
+		All(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	items := make([]*types.SchemaDetailResp, 0, len(list))
+	for _, sd := range list {
+		items = append(items, service.ToSchemaDetailResp(sd))
+	}
+	return &types.SchemaListResp{
+		Total: int64(len(list)),
+		List:  items,
+	}, nil
 }

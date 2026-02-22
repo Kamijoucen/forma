@@ -5,7 +5,13 @@ package entity
 
 import (
 	"context"
+	"strconv"
 
+	"forma/internal/ent"
+	"forma/internal/ent/entityrecord"
+	"forma/internal/ent/schemadef"
+	"forma/internal/errorx"
+	"forma/internal/service"
 	"forma/internal/svc"
 	"forma/internal/types"
 
@@ -27,7 +33,25 @@ func NewEntityDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enti
 }
 
 func (l *EntityDetailLogic) EntityDetail(req *types.EntityDetailReq) (resp *types.EntityDetailResp, err error) {
-	// todo: add your logic here and delete this line
+	id, err := strconv.Atoi(req.Id)
+	if err != nil {
+		return nil, errorx.NewBizError(errorx.CodeInvalidParam, "ID格式不正确")
+	}
 
-	return
+	record, err := l.svcCtx.Ent.EntityRecord.
+		Query().
+		Where(
+			entityrecord.IDEQ(id),
+			entityrecord.HasSchemaDefWith(schemadef.NameEQ(req.SchemaName)),
+		).
+		WithFieldValues().
+		Only(l.ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errorx.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return service.ToEntityDetailResp(record, req.SchemaName), nil
 }

@@ -3,17 +3,17 @@ syntax = "v1"
 import "common.api"
 
 type SchemaCreateReq {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-    Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaUpdateReq {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-    Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaDeleteReq {
@@ -25,16 +25,16 @@ type SchemaDetailReq {
 }
 
 type SchemaDetailResp {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-    Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
-	CreatedAt   string     `json:"createdAt"`
-	UpdatedAt   string     `json:"updatedAt"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
+	CreatedAt   string      `json:"createdAt"`
+	UpdatedAt   string      `json:"updatedAt"`
 }
 
 type SchemaListResp {
-	Total int64              `json:"total"`
-	List  []SchemaDetailResp `json:"list"`
+	Total int64               `json:"total"`
+	List  []*SchemaDetailResp `json:"list"`
 }
 

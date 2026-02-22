@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 	"forma/internal/ent/schemadef"
@@ -70,6 +71,21 @@ func (_u *SchemaDefUpdate) AddFieldDefs(v ...*FieldDef) *SchemaDefUpdate {
 	return _u.AddFieldDefIDs(ids...)
 }
 
+// AddEntityRecordIDs adds the "entityRecords" edge to the EntityRecord entity by IDs.
+func (_u *SchemaDefUpdate) AddEntityRecordIDs(ids ...int) *SchemaDefUpdate {
+	_u.mutation.AddEntityRecordIDs(ids...)
+	return _u
+}
+
+// AddEntityRecords adds the "entityRecords" edges to the EntityRecord entity.
+func (_u *SchemaDefUpdate) AddEntityRecords(v ...*EntityRecord) *SchemaDefUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEntityRecordIDs(ids...)
+}
+
 // Mutation returns the SchemaDefMutation object of the builder.
 func (_u *SchemaDefUpdate) Mutation() *SchemaDefMutation {
 	return _u.mutation
@@ -94,6 +110,27 @@ func (_u *SchemaDefUpdate) RemoveFieldDefs(v ...*FieldDef) *SchemaDefUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFieldDefIDs(ids...)
+}
+
+// ClearEntityRecords clears all "entityRecords" edges to the EntityRecord entity.
+func (_u *SchemaDefUpdate) ClearEntityRecords() *SchemaDefUpdate {
+	_u.mutation.ClearEntityRecords()
+	return _u
+}
+
+// RemoveEntityRecordIDs removes the "entityRecords" edge to EntityRecord entities by IDs.
+func (_u *SchemaDefUpdate) RemoveEntityRecordIDs(ids ...int) *SchemaDefUpdate {
+	_u.mutation.RemoveEntityRecordIDs(ids...)
+	return _u
+}
+
+// RemoveEntityRecords removes "entityRecords" edges to EntityRecord entities.
+func (_u *SchemaDefUpdate) RemoveEntityRecords(v ...*EntityRecord) *SchemaDefUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEntityRecordIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -195,6 +232,51 @@ func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.EntityRecordsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEntityRecordsIDs(); len(nodes) > 0 && !_u.mutation.EntityRecordsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EntityRecordsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{schemadef.Label}
@@ -256,6 +338,21 @@ func (_u *SchemaDefUpdateOne) AddFieldDefs(v ...*FieldDef) *SchemaDefUpdateOne {
 	return _u.AddFieldDefIDs(ids...)
 }
 
+// AddEntityRecordIDs adds the "entityRecords" edge to the EntityRecord entity by IDs.
+func (_u *SchemaDefUpdateOne) AddEntityRecordIDs(ids ...int) *SchemaDefUpdateOne {
+	_u.mutation.AddEntityRecordIDs(ids...)
+	return _u
+}
+
+// AddEntityRecords adds the "entityRecords" edges to the EntityRecord entity.
+func (_u *SchemaDefUpdateOne) AddEntityRecords(v ...*EntityRecord) *SchemaDefUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEntityRecordIDs(ids...)
+}
+
 // Mutation returns the SchemaDefMutation object of the builder.
 func (_u *SchemaDefUpdateOne) Mutation() *SchemaDefMutation {
 	return _u.mutation
@@ -280,6 +377,27 @@ func (_u *SchemaDefUpdateOne) RemoveFieldDefs(v ...*FieldDef) *SchemaDefUpdateOn
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFieldDefIDs(ids...)
+}
+
+// ClearEntityRecords clears all "entityRecords" edges to the EntityRecord entity.
+func (_u *SchemaDefUpdateOne) ClearEntityRecords() *SchemaDefUpdateOne {
+	_u.mutation.ClearEntityRecords()
+	return _u
+}
+
+// RemoveEntityRecordIDs removes the "entityRecords" edge to EntityRecord entities by IDs.
+func (_u *SchemaDefUpdateOne) RemoveEntityRecordIDs(ids ...int) *SchemaDefUpdateOne {
+	_u.mutation.RemoveEntityRecordIDs(ids...)
+	return _u
+}
+
+// RemoveEntityRecords removes "entityRecords" edges to EntityRecord entities.
+func (_u *SchemaDefUpdateOne) RemoveEntityRecords(v ...*EntityRecord) *SchemaDefUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEntityRecordIDs(ids...)
 }
 
 // Where appends a list predicates to the SchemaDefUpdate builder.
@@ -404,6 +522,51 @@ func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EntityRecordsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEntityRecordsIDs(); len(nodes) > 0 && !_u.mutation.EntityRecordsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EntityRecordsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   schemadef.EntityRecordsTable,
+			Columns: []string{schemadef.EntityRecordsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

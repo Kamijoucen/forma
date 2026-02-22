@@ -8,13 +8,56 @@ import (
 )
 
 var (
+	// EntityFieldValuesColumns holds the columns for the "entity_field_values" table.
+	EntityFieldValuesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "boolean", "date", "text", "enum", "json", "array"}},
+		{Name: "value", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "entity_record_field_values", Type: field.TypeInt},
+	}
+	// EntityFieldValuesTable holds the schema information for the "entity_field_values" table.
+	EntityFieldValuesTable = &schema.Table{
+		Name:       "entity_field_values",
+		Columns:    EntityFieldValuesColumns,
+		PrimaryKey: []*schema.Column{EntityFieldValuesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "entity_field_values_entity_records_fieldValues",
+				Columns:    []*schema.Column{EntityFieldValuesColumns[4]},
+				RefColumns: []*schema.Column{EntityRecordsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// EntityRecordsColumns holds the columns for the "entity_records" table.
+	EntityRecordsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "schema_def_entity_records", Type: field.TypeInt},
+	}
+	// EntityRecordsTable holds the schema information for the "entity_records" table.
+	EntityRecordsTable = &schema.Table{
+		Name:       "entity_records",
+		Columns:    EntityRecordsColumns,
+		PrimaryKey: []*schema.Column{EntityRecordsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "entity_records_schema_defs_entityRecords",
+				Columns:    []*schema.Column{EntityRecordsColumns[3]},
+				RefColumns: []*schema.Column{SchemaDefsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// FieldDefsColumns holds the columns for the "field_defs" table.
 	FieldDefsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "boolean", "date"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "boolean", "date", "text", "enum", "json", "array"}},
 		{Name: "required", Type: field.TypeBool, Default: false},
 		{Name: "max_length", Type: field.TypeInt, Default: 500},
 		{Name: "min_length", Type: field.TypeInt, Default: 0},
@@ -41,7 +84,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 	}
 	// SchemaDefsTable holds the schema information for the "schema_defs" table.
@@ -52,11 +95,15 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		EntityFieldValuesTable,
+		EntityRecordsTable,
 		FieldDefsTable,
 		SchemaDefsTable,
 	}
 )
 
 func init() {
+	EntityFieldValuesTable.ForeignKeys[0].RefTable = EntityRecordsTable
+	EntityRecordsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 	FieldDefsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 }

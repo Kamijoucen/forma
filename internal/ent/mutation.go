@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/entityfieldvalue"
+	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 	"forma/internal/ent/schemadef"
@@ -25,9 +27,1044 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeFieldDef  = "FieldDef"
-	TypeSchemaDef = "SchemaDef"
+	TypeEntityFieldValue = "EntityFieldValue"
+	TypeEntityRecord     = "EntityRecord"
+	TypeFieldDef         = "FieldDef"
+	TypeSchemaDef        = "SchemaDef"
 )
+
+// EntityFieldValueMutation represents an operation that mutates the EntityFieldValue nodes in the graph.
+type EntityFieldValueMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	name                *string
+	_type               *entityfieldvalue.Type
+	value               *string
+	clearedFields       map[string]struct{}
+	entityRecord        *int
+	clearedentityRecord bool
+	done                bool
+	oldValue            func(context.Context) (*EntityFieldValue, error)
+	predicates          []predicate.EntityFieldValue
+}
+
+var _ ent.Mutation = (*EntityFieldValueMutation)(nil)
+
+// entityfieldvalueOption allows management of the mutation configuration using functional options.
+type entityfieldvalueOption func(*EntityFieldValueMutation)
+
+// newEntityFieldValueMutation creates new mutation for the EntityFieldValue entity.
+func newEntityFieldValueMutation(c config, op Op, opts ...entityfieldvalueOption) *EntityFieldValueMutation {
+	m := &EntityFieldValueMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEntityFieldValue,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEntityFieldValueID sets the ID field of the mutation.
+func withEntityFieldValueID(id int) entityfieldvalueOption {
+	return func(m *EntityFieldValueMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EntityFieldValue
+		)
+		m.oldValue = func(ctx context.Context) (*EntityFieldValue, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EntityFieldValue.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEntityFieldValue sets the old EntityFieldValue of the mutation.
+func withEntityFieldValue(node *EntityFieldValue) entityfieldvalueOption {
+	return func(m *EntityFieldValueMutation) {
+		m.oldValue = func(context.Context) (*EntityFieldValue, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EntityFieldValueMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EntityFieldValueMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EntityFieldValueMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EntityFieldValueMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EntityFieldValue.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *EntityFieldValueMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EntityFieldValueMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the EntityFieldValue entity.
+// If the EntityFieldValue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityFieldValueMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EntityFieldValueMutation) ResetName() {
+	m.name = nil
+}
+
+// SetType sets the "type" field.
+func (m *EntityFieldValueMutation) SetType(e entityfieldvalue.Type) {
+	m._type = &e
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *EntityFieldValueMutation) GetType() (r entityfieldvalue.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the EntityFieldValue entity.
+// If the EntityFieldValue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityFieldValueMutation) OldType(ctx context.Context) (v entityfieldvalue.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *EntityFieldValueMutation) ResetType() {
+	m._type = nil
+}
+
+// SetValue sets the "value" field.
+func (m *EntityFieldValueMutation) SetValue(s string) {
+	m.value = &s
+}
+
+// Value returns the value of the "value" field in the mutation.
+func (m *EntityFieldValueMutation) Value() (r string, exists bool) {
+	v := m.value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValue returns the old "value" field's value of the EntityFieldValue entity.
+// If the EntityFieldValue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityFieldValueMutation) OldValue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValue: %w", err)
+	}
+	return oldValue.Value, nil
+}
+
+// ResetValue resets all changes to the "value" field.
+func (m *EntityFieldValueMutation) ResetValue() {
+	m.value = nil
+}
+
+// SetEntityRecordID sets the "entityRecord" edge to the EntityRecord entity by id.
+func (m *EntityFieldValueMutation) SetEntityRecordID(id int) {
+	m.entityRecord = &id
+}
+
+// ClearEntityRecord clears the "entityRecord" edge to the EntityRecord entity.
+func (m *EntityFieldValueMutation) ClearEntityRecord() {
+	m.clearedentityRecord = true
+}
+
+// EntityRecordCleared reports if the "entityRecord" edge to the EntityRecord entity was cleared.
+func (m *EntityFieldValueMutation) EntityRecordCleared() bool {
+	return m.clearedentityRecord
+}
+
+// EntityRecordID returns the "entityRecord" edge ID in the mutation.
+func (m *EntityFieldValueMutation) EntityRecordID() (id int, exists bool) {
+	if m.entityRecord != nil {
+		return *m.entityRecord, true
+	}
+	return
+}
+
+// EntityRecordIDs returns the "entityRecord" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EntityRecordID instead. It exists only for internal usage by the builders.
+func (m *EntityFieldValueMutation) EntityRecordIDs() (ids []int) {
+	if id := m.entityRecord; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEntityRecord resets all changes to the "entityRecord" edge.
+func (m *EntityFieldValueMutation) ResetEntityRecord() {
+	m.entityRecord = nil
+	m.clearedentityRecord = false
+}
+
+// Where appends a list predicates to the EntityFieldValueMutation builder.
+func (m *EntityFieldValueMutation) Where(ps ...predicate.EntityFieldValue) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EntityFieldValueMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EntityFieldValueMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EntityFieldValue, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EntityFieldValueMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EntityFieldValueMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EntityFieldValue).
+func (m *EntityFieldValueMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EntityFieldValueMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.name != nil {
+		fields = append(fields, entityfieldvalue.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, entityfieldvalue.FieldType)
+	}
+	if m.value != nil {
+		fields = append(fields, entityfieldvalue.FieldValue)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EntityFieldValueMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case entityfieldvalue.FieldName:
+		return m.Name()
+	case entityfieldvalue.FieldType:
+		return m.GetType()
+	case entityfieldvalue.FieldValue:
+		return m.Value()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EntityFieldValueMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case entityfieldvalue.FieldName:
+		return m.OldName(ctx)
+	case entityfieldvalue.FieldType:
+		return m.OldType(ctx)
+	case entityfieldvalue.FieldValue:
+		return m.OldValue(ctx)
+	}
+	return nil, fmt.Errorf("unknown EntityFieldValue field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EntityFieldValueMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case entityfieldvalue.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case entityfieldvalue.FieldType:
+		v, ok := value.(entityfieldvalue.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case entityfieldvalue.FieldValue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EntityFieldValue field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EntityFieldValueMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EntityFieldValueMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EntityFieldValueMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EntityFieldValue numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EntityFieldValueMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EntityFieldValueMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EntityFieldValueMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown EntityFieldValue nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EntityFieldValueMutation) ResetField(name string) error {
+	switch name {
+	case entityfieldvalue.FieldName:
+		m.ResetName()
+		return nil
+	case entityfieldvalue.FieldType:
+		m.ResetType()
+		return nil
+	case entityfieldvalue.FieldValue:
+		m.ResetValue()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityFieldValue field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EntityFieldValueMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.entityRecord != nil {
+		edges = append(edges, entityfieldvalue.EdgeEntityRecord)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EntityFieldValueMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case entityfieldvalue.EdgeEntityRecord:
+		if id := m.entityRecord; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EntityFieldValueMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EntityFieldValueMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EntityFieldValueMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedentityRecord {
+		edges = append(edges, entityfieldvalue.EdgeEntityRecord)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EntityFieldValueMutation) EdgeCleared(name string) bool {
+	switch name {
+	case entityfieldvalue.EdgeEntityRecord:
+		return m.clearedentityRecord
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EntityFieldValueMutation) ClearEdge(name string) error {
+	switch name {
+	case entityfieldvalue.EdgeEntityRecord:
+		m.ClearEntityRecord()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityFieldValue unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EntityFieldValueMutation) ResetEdge(name string) error {
+	switch name {
+	case entityfieldvalue.EdgeEntityRecord:
+		m.ResetEntityRecord()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityFieldValue edge %s", name)
+}
+
+// EntityRecordMutation represents an operation that mutates the EntityRecord nodes in the graph.
+type EntityRecordMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	create_time        *time.Time
+	update_time        *time.Time
+	clearedFields      map[string]struct{}
+	schemaDef          *int
+	clearedschemaDef   bool
+	fieldValues        map[int]struct{}
+	removedfieldValues map[int]struct{}
+	clearedfieldValues bool
+	done               bool
+	oldValue           func(context.Context) (*EntityRecord, error)
+	predicates         []predicate.EntityRecord
+}
+
+var _ ent.Mutation = (*EntityRecordMutation)(nil)
+
+// entityrecordOption allows management of the mutation configuration using functional options.
+type entityrecordOption func(*EntityRecordMutation)
+
+// newEntityRecordMutation creates new mutation for the EntityRecord entity.
+func newEntityRecordMutation(c config, op Op, opts ...entityrecordOption) *EntityRecordMutation {
+	m := &EntityRecordMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEntityRecord,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEntityRecordID sets the ID field of the mutation.
+func withEntityRecordID(id int) entityrecordOption {
+	return func(m *EntityRecordMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EntityRecord
+		)
+		m.oldValue = func(ctx context.Context) (*EntityRecord, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EntityRecord.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEntityRecord sets the old EntityRecord of the mutation.
+func withEntityRecord(node *EntityRecord) entityrecordOption {
+	return func(m *EntityRecordMutation) {
+		m.oldValue = func(context.Context) (*EntityRecord, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EntityRecordMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EntityRecordMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EntityRecordMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EntityRecordMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EntityRecord.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *EntityRecordMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *EntityRecordMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the EntityRecord entity.
+// If the EntityRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityRecordMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *EntityRecordMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *EntityRecordMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *EntityRecordMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the EntityRecord entity.
+// If the EntityRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityRecordMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *EntityRecordMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetSchemaDefID sets the "schemaDef" edge to the SchemaDef entity by id.
+func (m *EntityRecordMutation) SetSchemaDefID(id int) {
+	m.schemaDef = &id
+}
+
+// ClearSchemaDef clears the "schemaDef" edge to the SchemaDef entity.
+func (m *EntityRecordMutation) ClearSchemaDef() {
+	m.clearedschemaDef = true
+}
+
+// SchemaDefCleared reports if the "schemaDef" edge to the SchemaDef entity was cleared.
+func (m *EntityRecordMutation) SchemaDefCleared() bool {
+	return m.clearedschemaDef
+}
+
+// SchemaDefID returns the "schemaDef" edge ID in the mutation.
+func (m *EntityRecordMutation) SchemaDefID() (id int, exists bool) {
+	if m.schemaDef != nil {
+		return *m.schemaDef, true
+	}
+	return
+}
+
+// SchemaDefIDs returns the "schemaDef" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SchemaDefID instead. It exists only for internal usage by the builders.
+func (m *EntityRecordMutation) SchemaDefIDs() (ids []int) {
+	if id := m.schemaDef; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSchemaDef resets all changes to the "schemaDef" edge.
+func (m *EntityRecordMutation) ResetSchemaDef() {
+	m.schemaDef = nil
+	m.clearedschemaDef = false
+}
+
+// AddFieldValueIDs adds the "fieldValues" edge to the EntityFieldValue entity by ids.
+func (m *EntityRecordMutation) AddFieldValueIDs(ids ...int) {
+	if m.fieldValues == nil {
+		m.fieldValues = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.fieldValues[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFieldValues clears the "fieldValues" edge to the EntityFieldValue entity.
+func (m *EntityRecordMutation) ClearFieldValues() {
+	m.clearedfieldValues = true
+}
+
+// FieldValuesCleared reports if the "fieldValues" edge to the EntityFieldValue entity was cleared.
+func (m *EntityRecordMutation) FieldValuesCleared() bool {
+	return m.clearedfieldValues
+}
+
+// RemoveFieldValueIDs removes the "fieldValues" edge to the EntityFieldValue entity by IDs.
+func (m *EntityRecordMutation) RemoveFieldValueIDs(ids ...int) {
+	if m.removedfieldValues == nil {
+		m.removedfieldValues = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.fieldValues, ids[i])
+		m.removedfieldValues[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFieldValues returns the removed IDs of the "fieldValues" edge to the EntityFieldValue entity.
+func (m *EntityRecordMutation) RemovedFieldValuesIDs() (ids []int) {
+	for id := range m.removedfieldValues {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FieldValuesIDs returns the "fieldValues" edge IDs in the mutation.
+func (m *EntityRecordMutation) FieldValuesIDs() (ids []int) {
+	for id := range m.fieldValues {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFieldValues resets all changes to the "fieldValues" edge.
+func (m *EntityRecordMutation) ResetFieldValues() {
+	m.fieldValues = nil
+	m.clearedfieldValues = false
+	m.removedfieldValues = nil
+}
+
+// Where appends a list predicates to the EntityRecordMutation builder.
+func (m *EntityRecordMutation) Where(ps ...predicate.EntityRecord) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EntityRecordMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EntityRecordMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EntityRecord, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EntityRecordMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EntityRecordMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EntityRecord).
+func (m *EntityRecordMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EntityRecordMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.create_time != nil {
+		fields = append(fields, entityrecord.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, entityrecord.FieldUpdateTime)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EntityRecordMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case entityrecord.FieldCreateTime:
+		return m.CreateTime()
+	case entityrecord.FieldUpdateTime:
+		return m.UpdateTime()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EntityRecordMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case entityrecord.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case entityrecord.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	}
+	return nil, fmt.Errorf("unknown EntityRecord field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EntityRecordMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case entityrecord.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case entityrecord.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EntityRecord field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EntityRecordMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EntityRecordMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EntityRecordMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EntityRecord numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EntityRecordMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EntityRecordMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EntityRecordMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown EntityRecord nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EntityRecordMutation) ResetField(name string) error {
+	switch name {
+	case entityrecord.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case entityrecord.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityRecord field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EntityRecordMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.schemaDef != nil {
+		edges = append(edges, entityrecord.EdgeSchemaDef)
+	}
+	if m.fieldValues != nil {
+		edges = append(edges, entityrecord.EdgeFieldValues)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EntityRecordMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case entityrecord.EdgeSchemaDef:
+		if id := m.schemaDef; id != nil {
+			return []ent.Value{*id}
+		}
+	case entityrecord.EdgeFieldValues:
+		ids := make([]ent.Value, 0, len(m.fieldValues))
+		for id := range m.fieldValues {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EntityRecordMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedfieldValues != nil {
+		edges = append(edges, entityrecord.EdgeFieldValues)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EntityRecordMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case entityrecord.EdgeFieldValues:
+		ids := make([]ent.Value, 0, len(m.removedfieldValues))
+		for id := range m.removedfieldValues {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EntityRecordMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedschemaDef {
+		edges = append(edges, entityrecord.EdgeSchemaDef)
+	}
+	if m.clearedfieldValues {
+		edges = append(edges, entityrecord.EdgeFieldValues)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EntityRecordMutation) EdgeCleared(name string) bool {
+	switch name {
+	case entityrecord.EdgeSchemaDef:
+		return m.clearedschemaDef
+	case entityrecord.EdgeFieldValues:
+		return m.clearedfieldValues
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EntityRecordMutation) ClearEdge(name string) error {
+	switch name {
+	case entityrecord.EdgeSchemaDef:
+		m.ClearSchemaDef()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityRecord unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EntityRecordMutation) ResetEdge(name string) error {
+	switch name {
+	case entityrecord.EdgeSchemaDef:
+		m.ResetSchemaDef()
+		return nil
+	case entityrecord.EdgeFieldValues:
+		m.ResetFieldValues()
+		return nil
+	}
+	return fmt.Errorf("unknown EntityRecord edge %s", name)
+}
 
 // FieldDefMutation represents an operation that mutates the FieldDef nodes in the graph.
 type FieldDefMutation struct {
@@ -984,20 +2021,23 @@ func (m *FieldDefMutation) ResetEdge(name string) error {
 // SchemaDefMutation represents an operation that mutates the SchemaDef nodes in the graph.
 type SchemaDefMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	create_time      *time.Time
-	update_time      *time.Time
-	name             *string
-	description      *string
-	clearedFields    map[string]struct{}
-	fieldDefs        map[int]struct{}
-	removedfieldDefs map[int]struct{}
-	clearedfieldDefs bool
-	done             bool
-	oldValue         func(context.Context) (*SchemaDef, error)
-	predicates       []predicate.SchemaDef
+	op                   Op
+	typ                  string
+	id                   *int
+	create_time          *time.Time
+	update_time          *time.Time
+	name                 *string
+	description          *string
+	clearedFields        map[string]struct{}
+	fieldDefs            map[int]struct{}
+	removedfieldDefs     map[int]struct{}
+	clearedfieldDefs     bool
+	entityRecords        map[int]struct{}
+	removedentityRecords map[int]struct{}
+	clearedentityRecords bool
+	done                 bool
+	oldValue             func(context.Context) (*SchemaDef, error)
+	predicates           []predicate.SchemaDef
 }
 
 var _ ent.Mutation = (*SchemaDefMutation)(nil)
@@ -1309,6 +2349,60 @@ func (m *SchemaDefMutation) ResetFieldDefs() {
 	m.removedfieldDefs = nil
 }
 
+// AddEntityRecordIDs adds the "entityRecords" edge to the EntityRecord entity by ids.
+func (m *SchemaDefMutation) AddEntityRecordIDs(ids ...int) {
+	if m.entityRecords == nil {
+		m.entityRecords = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.entityRecords[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEntityRecords clears the "entityRecords" edge to the EntityRecord entity.
+func (m *SchemaDefMutation) ClearEntityRecords() {
+	m.clearedentityRecords = true
+}
+
+// EntityRecordsCleared reports if the "entityRecords" edge to the EntityRecord entity was cleared.
+func (m *SchemaDefMutation) EntityRecordsCleared() bool {
+	return m.clearedentityRecords
+}
+
+// RemoveEntityRecordIDs removes the "entityRecords" edge to the EntityRecord entity by IDs.
+func (m *SchemaDefMutation) RemoveEntityRecordIDs(ids ...int) {
+	if m.removedentityRecords == nil {
+		m.removedentityRecords = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.entityRecords, ids[i])
+		m.removedentityRecords[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEntityRecords returns the removed IDs of the "entityRecords" edge to the EntityRecord entity.
+func (m *SchemaDefMutation) RemovedEntityRecordsIDs() (ids []int) {
+	for id := range m.removedentityRecords {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EntityRecordsIDs returns the "entityRecords" edge IDs in the mutation.
+func (m *SchemaDefMutation) EntityRecordsIDs() (ids []int) {
+	for id := range m.entityRecords {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEntityRecords resets all changes to the "entityRecords" edge.
+func (m *SchemaDefMutation) ResetEntityRecords() {
+	m.entityRecords = nil
+	m.clearedentityRecords = false
+	m.removedentityRecords = nil
+}
+
 // Where appends a list predicates to the SchemaDefMutation builder.
 func (m *SchemaDefMutation) Where(ps ...predicate.SchemaDef) {
 	m.predicates = append(m.predicates, ps...)
@@ -1502,9 +2596,12 @@ func (m *SchemaDefMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *SchemaDefMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.fieldDefs != nil {
 		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	if m.entityRecords != nil {
+		edges = append(edges, schemadef.EdgeEntityRecords)
 	}
 	return edges
 }
@@ -1519,15 +2616,24 @@ func (m *SchemaDefMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case schemadef.EdgeEntityRecords:
+		ids := make([]ent.Value, 0, len(m.entityRecords))
+		for id := range m.entityRecords {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *SchemaDefMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedfieldDefs != nil {
 		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	if m.removedentityRecords != nil {
+		edges = append(edges, schemadef.EdgeEntityRecords)
 	}
 	return edges
 }
@@ -1542,15 +2648,24 @@ func (m *SchemaDefMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case schemadef.EdgeEntityRecords:
+		ids := make([]ent.Value, 0, len(m.removedentityRecords))
+		for id := range m.removedentityRecords {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *SchemaDefMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedfieldDefs {
 		edges = append(edges, schemadef.EdgeFieldDefs)
+	}
+	if m.clearedentityRecords {
+		edges = append(edges, schemadef.EdgeEntityRecords)
 	}
 	return edges
 }
@@ -1561,6 +2676,8 @@ func (m *SchemaDefMutation) EdgeCleared(name string) bool {
 	switch name {
 	case schemadef.EdgeFieldDefs:
 		return m.clearedfieldDefs
+	case schemadef.EdgeEntityRecords:
+		return m.clearedentityRecords
 	}
 	return false
 }
@@ -1579,6 +2696,9 @@ func (m *SchemaDefMutation) ResetEdge(name string) error {
 	switch name {
 	case schemadef.EdgeFieldDefs:
 		m.ResetFieldDefs()
+		return nil
+	case schemadef.EdgeEntityRecords:
+		m.ResetEntityRecords()
 		return nil
 	}
 	return fmt.Errorf("unknown SchemaDef edge %s", name)

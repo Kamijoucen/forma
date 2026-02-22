@@ -24,6 +24,8 @@ const (
 	FieldDescription = "description"
 	// EdgeFieldDefs holds the string denoting the fielddefs edge name in mutations.
 	EdgeFieldDefs = "fieldDefs"
+	// EdgeEntityRecords holds the string denoting the entityrecords edge name in mutations.
+	EdgeEntityRecords = "entityRecords"
 	// Table holds the table name of the schemadef in the database.
 	Table = "schema_defs"
 	// FieldDefsTable is the table that holds the fieldDefs relation/edge.
@@ -33,6 +35,13 @@ const (
 	FieldDefsInverseTable = "field_defs"
 	// FieldDefsColumn is the table column denoting the fieldDefs relation/edge.
 	FieldDefsColumn = "schema_def_field_defs"
+	// EntityRecordsTable is the table that holds the entityRecords relation/edge.
+	EntityRecordsTable = "entity_records"
+	// EntityRecordsInverseTable is the table name for the EntityRecord entity.
+	// It exists in this package in order to avoid circular dependency with the "entityrecord" package.
+	EntityRecordsInverseTable = "entity_records"
+	// EntityRecordsColumn is the table column denoting the entityRecords relation/edge.
+	EntityRecordsColumn = "schema_def_entity_records"
 )
 
 // Columns holds all SQL columns for schemadef fields.
@@ -106,10 +115,31 @@ func ByFieldDefs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newFieldDefsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEntityRecordsCount orders the results by entityRecords count.
+func ByEntityRecordsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEntityRecordsStep(), opts...)
+	}
+}
+
+// ByEntityRecords orders the results by entityRecords terms.
+func ByEntityRecords(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEntityRecordsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newFieldDefsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(FieldDefsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, FieldDefsTable, FieldDefsColumn),
+	)
+}
+func newEntityRecordsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EntityRecordsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EntityRecordsTable, EntityRecordsColumn),
 	)
 }

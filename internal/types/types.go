@@ -4,8 +4,8 @@
 package types
 
 type EntityCreateReq struct {
-	SchemaName string       `json:"schemaName"`
-	Fields     []FieldValue `json:"fields"`
+	SchemaName string        `json:"schemaName"`
+	Fields     []*FieldValue `json:"fields"`
 }
 
 type EntityCreateResp struct {
@@ -23,11 +23,11 @@ type EntityDetailReq struct {
 }
 
 type EntityDetailResp struct {
-	Id         string       `json:"id"`
-	SchemaName string       `json:"schemaName"`
-	Fields     []FieldValue `json:"fields"`
-	CreatedAt  string       `json:"createdAt"`
-	UpdatedAt  string       `json:"updatedAt"`
+	Id         string        `json:"id"`
+	SchemaName string        `json:"schemaName"`
+	Fields     []*FieldValue `json:"fields"`
+	CreatedAt  string        `json:"createdAt"`
+	UpdatedAt  string        `json:"updatedAt"`
 }
 
 type EntityListReq struct {
@@ -37,14 +37,14 @@ type EntityListReq struct {
 }
 
 type EntityListResp struct {
-	Total int64              `json:"total"`
-	List  []EntityDetailResp `json:"list"`
+	Total int64               `json:"total"`
+	List  []*EntityDetailResp `json:"list"`
 }
 
 type EntityUpdateReq struct {
-	SchemaName string       `json:"schemaName"`
-	Id         string       `json:"id"`
-	Fields     []FieldValue `json:"fields"`
+	SchemaName string        `json:"schemaName"`
+	Id         string        `json:"id"`
+	Fields     []*FieldValue `json:"fields"`
 }
 
 type FieldDef struct {
@@ -65,10 +65,10 @@ type FieldValue struct {
 }
 
 type SchemaCreateReq struct {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-	Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaDeleteReq struct {
@@ -80,22 +80,22 @@ type SchemaDetailReq struct {
 }
 
 type SchemaDetailResp struct {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-	Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
-	CreatedAt   string     `json:"createdAt"`
-	UpdatedAt   string     `json:"updatedAt"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
+	CreatedAt   string      `json:"createdAt"`
+	UpdatedAt   string      `json:"updatedAt"`
 }
 
 type SchemaListResp struct {
-	Total int64              `json:"total"`
-	List  []SchemaDetailResp `json:"list"`
+	Total int64               `json:"total"`
+	List  []*SchemaDetailResp `json:"list"`
 }
 
 type SchemaUpdateReq struct {
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,optional"`
-	Description string     `json:"description,optional"`
-	Fields      []FieldDef `json:"fields"`
+	Name        string      `json:"name"`
+	DisplayName string      `json:"displayName,optional"`
+	Description string      `json:"description,optional"`
+	Fields      []*FieldDef `json:"fields"`
 }

@@ -35,9 +35,11 @@ type SchemaDef struct {
 type SchemaDefEdges struct {
 	// Schema包含的字段定义
 	FieldDefs []*FieldDef `json:"fieldDefs,omitempty"`
+	// Schema下的实体记录
+	EntityRecords []*EntityRecord `json:"entityRecords,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // FieldDefsOrErr returns the FieldDefs value or an error if the edge
@@ -47,6 +49,15 @@ func (e SchemaDefEdges) FieldDefsOrErr() ([]*FieldDef, error) {
 		return e.FieldDefs, nil
 	}
 	return nil, &NotLoadedError{edge: "fieldDefs"}
+}
+
+// EntityRecordsOrErr returns the EntityRecords value or an error if the edge
+// was not loaded in eager-loading.
+func (e SchemaDefEdges) EntityRecordsOrErr() ([]*EntityRecord, error) {
+	if e.loadedTypes[1] {
+		return e.EntityRecords, nil
+	}
+	return nil, &NotLoadedError{edge: "entityRecords"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,6 +132,11 @@ func (_m *SchemaDef) Value(name string) (ent.Value, error) {
 // QueryFieldDefs queries the "fieldDefs" edge of the SchemaDef entity.
 func (_m *SchemaDef) QueryFieldDefs() *FieldDefQuery {
 	return NewSchemaDefClient(_m.config).QueryFieldDefs(_m)
+}
+
+// QueryEntityRecords queries the "entityRecords" edge of the SchemaDef entity.
+func (_m *SchemaDef) QueryEntityRecords() *EntityRecordQuery {
+	return NewSchemaDefClient(_m.config).QueryEntityRecords(_m)
 }
 
 // Update returns a builder for updating this SchemaDef.

@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
-	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 	"forma/internal/ent/schemadef"
 	"math"
@@ -18,54 +18,55 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// SchemaDefQuery is the builder for querying SchemaDef entities.
-type SchemaDefQuery struct {
+// EntityRecordQuery is the builder for querying EntityRecord entities.
+type EntityRecordQuery struct {
 	config
-	ctx               *QueryContext
-	order             []schemadef.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.SchemaDef
-	withFieldDefs     *FieldDefQuery
-	withEntityRecords *EntityRecordQuery
+	ctx             *QueryContext
+	order           []entityrecord.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.EntityRecord
+	withSchemaDef   *SchemaDefQuery
+	withFieldValues *EntityFieldValueQuery
+	withFKs         bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the SchemaDefQuery builder.
-func (_q *SchemaDefQuery) Where(ps ...predicate.SchemaDef) *SchemaDefQuery {
+// Where adds a new predicate for the EntityRecordQuery builder.
+func (_q *EntityRecordQuery) Where(ps ...predicate.EntityRecord) *EntityRecordQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *SchemaDefQuery) Limit(limit int) *SchemaDefQuery {
+func (_q *EntityRecordQuery) Limit(limit int) *EntityRecordQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *SchemaDefQuery) Offset(offset int) *SchemaDefQuery {
+func (_q *EntityRecordQuery) Offset(offset int) *EntityRecordQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *SchemaDefQuery) Unique(unique bool) *SchemaDefQuery {
+func (_q *EntityRecordQuery) Unique(unique bool) *EntityRecordQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *SchemaDefQuery) Order(o ...schemadef.OrderOption) *SchemaDefQuery {
+func (_q *EntityRecordQuery) Order(o ...entityrecord.OrderOption) *EntityRecordQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryFieldDefs chains the current query on the "fieldDefs" edge.
-func (_q *SchemaDefQuery) QueryFieldDefs() *FieldDefQuery {
-	query := (&FieldDefClient{config: _q.config}).Query()
+// QuerySchemaDef chains the current query on the "schemaDef" edge.
+func (_q *EntityRecordQuery) QuerySchemaDef() *SchemaDefQuery {
+	query := (&SchemaDefClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,9 +76,9 @@ func (_q *SchemaDefQuery) QueryFieldDefs() *FieldDefQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(schemadef.Table, schemadef.FieldID, selector),
-			sqlgraph.To(fielddef.Table, fielddef.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, schemadef.FieldDefsTable, schemadef.FieldDefsColumn),
+			sqlgraph.From(entityrecord.Table, entityrecord.FieldID, selector),
+			sqlgraph.To(schemadef.Table, schemadef.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, entityrecord.SchemaDefTable, entityrecord.SchemaDefColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -85,9 +86,9 @@ func (_q *SchemaDefQuery) QueryFieldDefs() *FieldDefQuery {
 	return query
 }
 
-// QueryEntityRecords chains the current query on the "entityRecords" edge.
-func (_q *SchemaDefQuery) QueryEntityRecords() *EntityRecordQuery {
-	query := (&EntityRecordClient{config: _q.config}).Query()
+// QueryFieldValues chains the current query on the "fieldValues" edge.
+func (_q *EntityRecordQuery) QueryFieldValues() *EntityFieldValueQuery {
+	query := (&EntityFieldValueClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -97,9 +98,9 @@ func (_q *SchemaDefQuery) QueryEntityRecords() *EntityRecordQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(schemadef.Table, schemadef.FieldID, selector),
-			sqlgraph.To(entityrecord.Table, entityrecord.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, schemadef.EntityRecordsTable, schemadef.EntityRecordsColumn),
+			sqlgraph.From(entityrecord.Table, entityrecord.FieldID, selector),
+			sqlgraph.To(entityfieldvalue.Table, entityfieldvalue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, entityrecord.FieldValuesTable, entityrecord.FieldValuesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -107,21 +108,21 @@ func (_q *SchemaDefQuery) QueryEntityRecords() *EntityRecordQuery {
 	return query
 }
 
-// First returns the first SchemaDef entity from the query.
-// Returns a *NotFoundError when no SchemaDef was found.
-func (_q *SchemaDefQuery) First(ctx context.Context) (*SchemaDef, error) {
+// First returns the first EntityRecord entity from the query.
+// Returns a *NotFoundError when no EntityRecord was found.
+func (_q *EntityRecordQuery) First(ctx context.Context) (*EntityRecord, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{schemadef.Label}
+		return nil, &NotFoundError{entityrecord.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *SchemaDefQuery) FirstX(ctx context.Context) *SchemaDef {
+func (_q *EntityRecordQuery) FirstX(ctx context.Context) *EntityRecord {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,22 +130,22 @@ func (_q *SchemaDefQuery) FirstX(ctx context.Context) *SchemaDef {
 	return node
 }
 
-// FirstID returns the first SchemaDef ID from the query.
-// Returns a *NotFoundError when no SchemaDef ID was found.
-func (_q *SchemaDefQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first EntityRecord ID from the query.
+// Returns a *NotFoundError when no EntityRecord ID was found.
+func (_q *EntityRecordQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{schemadef.Label}
+		err = &NotFoundError{entityrecord.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *SchemaDefQuery) FirstIDX(ctx context.Context) int {
+func (_q *EntityRecordQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -152,10 +153,10 @@ func (_q *SchemaDefQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single SchemaDef entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one SchemaDef entity is found.
-// Returns a *NotFoundError when no SchemaDef entities are found.
-func (_q *SchemaDefQuery) Only(ctx context.Context) (*SchemaDef, error) {
+// Only returns a single EntityRecord entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one EntityRecord entity is found.
+// Returns a *NotFoundError when no EntityRecord entities are found.
+func (_q *EntityRecordQuery) Only(ctx context.Context) (*EntityRecord, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -164,14 +165,14 @@ func (_q *SchemaDefQuery) Only(ctx context.Context) (*SchemaDef, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{schemadef.Label}
+		return nil, &NotFoundError{entityrecord.Label}
 	default:
-		return nil, &NotSingularError{schemadef.Label}
+		return nil, &NotSingularError{entityrecord.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *SchemaDefQuery) OnlyX(ctx context.Context) *SchemaDef {
+func (_q *EntityRecordQuery) OnlyX(ctx context.Context) *EntityRecord {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -179,10 +180,10 @@ func (_q *SchemaDefQuery) OnlyX(ctx context.Context) *SchemaDef {
 	return node
 }
 
-// OnlyID is like Only, but returns the only SchemaDef ID in the query.
-// Returns a *NotSingularError when more than one SchemaDef ID is found.
+// OnlyID is like Only, but returns the only EntityRecord ID in the query.
+// Returns a *NotSingularError when more than one EntityRecord ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *SchemaDefQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *EntityRecordQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -191,15 +192,15 @@ func (_q *SchemaDefQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{schemadef.Label}
+		err = &NotFoundError{entityrecord.Label}
 	default:
-		err = &NotSingularError{schemadef.Label}
+		err = &NotSingularError{entityrecord.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *SchemaDefQuery) OnlyIDX(ctx context.Context) int {
+func (_q *EntityRecordQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -207,18 +208,18 @@ func (_q *SchemaDefQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of SchemaDefs.
-func (_q *SchemaDefQuery) All(ctx context.Context) ([]*SchemaDef, error) {
+// All executes the query and returns a list of EntityRecords.
+func (_q *EntityRecordQuery) All(ctx context.Context) ([]*EntityRecord, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*SchemaDef, *SchemaDefQuery]()
-	return withInterceptors[[]*SchemaDef](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*EntityRecord, *EntityRecordQuery]()
+	return withInterceptors[[]*EntityRecord](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *SchemaDefQuery) AllX(ctx context.Context) []*SchemaDef {
+func (_q *EntityRecordQuery) AllX(ctx context.Context) []*EntityRecord {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -226,20 +227,20 @@ func (_q *SchemaDefQuery) AllX(ctx context.Context) []*SchemaDef {
 	return nodes
 }
 
-// IDs executes the query and returns a list of SchemaDef IDs.
-func (_q *SchemaDefQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of EntityRecord IDs.
+func (_q *EntityRecordQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(schemadef.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(entityrecord.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *SchemaDefQuery) IDsX(ctx context.Context) []int {
+func (_q *EntityRecordQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -248,16 +249,16 @@ func (_q *SchemaDefQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *SchemaDefQuery) Count(ctx context.Context) (int, error) {
+func (_q *EntityRecordQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*SchemaDefQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*EntityRecordQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *SchemaDefQuery) CountX(ctx context.Context) int {
+func (_q *EntityRecordQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -266,7 +267,7 @@ func (_q *SchemaDefQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *SchemaDefQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *EntityRecordQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -279,7 +280,7 @@ func (_q *SchemaDefQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *SchemaDefQuery) ExistX(ctx context.Context) bool {
+func (_q *EntityRecordQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -287,45 +288,45 @@ func (_q *SchemaDefQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the SchemaDefQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the EntityRecordQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *SchemaDefQuery) Clone() *SchemaDefQuery {
+func (_q *EntityRecordQuery) Clone() *EntityRecordQuery {
 	if _q == nil {
 		return nil
 	}
-	return &SchemaDefQuery{
-		config:            _q.config,
-		ctx:               _q.ctx.Clone(),
-		order:             append([]schemadef.OrderOption{}, _q.order...),
-		inters:            append([]Interceptor{}, _q.inters...),
-		predicates:        append([]predicate.SchemaDef{}, _q.predicates...),
-		withFieldDefs:     _q.withFieldDefs.Clone(),
-		withEntityRecords: _q.withEntityRecords.Clone(),
+	return &EntityRecordQuery{
+		config:          _q.config,
+		ctx:             _q.ctx.Clone(),
+		order:           append([]entityrecord.OrderOption{}, _q.order...),
+		inters:          append([]Interceptor{}, _q.inters...),
+		predicates:      append([]predicate.EntityRecord{}, _q.predicates...),
+		withSchemaDef:   _q.withSchemaDef.Clone(),
+		withFieldValues: _q.withFieldValues.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithFieldDefs tells the query-builder to eager-load the nodes that are connected to
-// the "fieldDefs" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *SchemaDefQuery) WithFieldDefs(opts ...func(*FieldDefQuery)) *SchemaDefQuery {
-	query := (&FieldDefClient{config: _q.config}).Query()
+// WithSchemaDef tells the query-builder to eager-load the nodes that are connected to
+// the "schemaDef" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EntityRecordQuery) WithSchemaDef(opts ...func(*SchemaDefQuery)) *EntityRecordQuery {
+	query := (&SchemaDefClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withFieldDefs = query
+	_q.withSchemaDef = query
 	return _q
 }
 
-// WithEntityRecords tells the query-builder to eager-load the nodes that are connected to
-// the "entityRecords" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *SchemaDefQuery) WithEntityRecords(opts ...func(*EntityRecordQuery)) *SchemaDefQuery {
-	query := (&EntityRecordClient{config: _q.config}).Query()
+// WithFieldValues tells the query-builder to eager-load the nodes that are connected to
+// the "fieldValues" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EntityRecordQuery) WithFieldValues(opts ...func(*EntityFieldValueQuery)) *EntityRecordQuery {
+	query := (&EntityFieldValueClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withEntityRecords = query
+	_q.withFieldValues = query
 	return _q
 }
 
@@ -339,15 +340,15 @@ func (_q *SchemaDefQuery) WithEntityRecords(opts ...func(*EntityRecordQuery)) *S
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.SchemaDef.Query().
-//		GroupBy(schemadef.FieldCreateTime).
+//	client.EntityRecord.Query().
+//		GroupBy(entityrecord.FieldCreateTime).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *SchemaDefQuery) GroupBy(field string, fields ...string) *SchemaDefGroupBy {
+func (_q *EntityRecordQuery) GroupBy(field string, fields ...string) *EntityRecordGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &SchemaDefGroupBy{build: _q}
+	grbuild := &EntityRecordGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = schemadef.Label
+	grbuild.label = entityrecord.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -361,23 +362,23 @@ func (_q *SchemaDefQuery) GroupBy(field string, fields ...string) *SchemaDefGrou
 //		CreateTime time.Time `json:"create_time,omitempty"`
 //	}
 //
-//	client.SchemaDef.Query().
-//		Select(schemadef.FieldCreateTime).
+//	client.EntityRecord.Query().
+//		Select(entityrecord.FieldCreateTime).
 //		Scan(ctx, &v)
-func (_q *SchemaDefQuery) Select(fields ...string) *SchemaDefSelect {
+func (_q *EntityRecordQuery) Select(fields ...string) *EntityRecordSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &SchemaDefSelect{SchemaDefQuery: _q}
-	sbuild.label = schemadef.Label
+	sbuild := &EntityRecordSelect{EntityRecordQuery: _q}
+	sbuild.label = entityrecord.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a SchemaDefSelect configured with the given aggregations.
-func (_q *SchemaDefQuery) Aggregate(fns ...AggregateFunc) *SchemaDefSelect {
+// Aggregate returns a EntityRecordSelect configured with the given aggregations.
+func (_q *EntityRecordQuery) Aggregate(fns ...AggregateFunc) *EntityRecordSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *SchemaDefQuery) prepareQuery(ctx context.Context) error {
+func (_q *EntityRecordQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -389,7 +390,7 @@ func (_q *SchemaDefQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !schemadef.ValidColumn(f) {
+		if !entityrecord.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -403,20 +404,27 @@ func (_q *SchemaDefQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *SchemaDefQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SchemaDef, error) {
+func (_q *EntityRecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*EntityRecord, error) {
 	var (
-		nodes       = []*SchemaDef{}
+		nodes       = []*EntityRecord{}
+		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			_q.withFieldDefs != nil,
-			_q.withEntityRecords != nil,
+			_q.withSchemaDef != nil,
+			_q.withFieldValues != nil,
 		}
 	)
+	if _q.withSchemaDef != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, entityrecord.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*SchemaDef).scanValues(nil, columns)
+		return (*EntityRecord).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &SchemaDef{config: _q.config}
+		node := &EntityRecord{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -430,57 +438,57 @@ func (_q *SchemaDefQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sc
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withFieldDefs; query != nil {
-		if err := _q.loadFieldDefs(ctx, query, nodes,
-			func(n *SchemaDef) { n.Edges.FieldDefs = []*FieldDef{} },
-			func(n *SchemaDef, e *FieldDef) { n.Edges.FieldDefs = append(n.Edges.FieldDefs, e) }); err != nil {
+	if query := _q.withSchemaDef; query != nil {
+		if err := _q.loadSchemaDef(ctx, query, nodes, nil,
+			func(n *EntityRecord, e *SchemaDef) { n.Edges.SchemaDef = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withEntityRecords; query != nil {
-		if err := _q.loadEntityRecords(ctx, query, nodes,
-			func(n *SchemaDef) { n.Edges.EntityRecords = []*EntityRecord{} },
-			func(n *SchemaDef, e *EntityRecord) { n.Edges.EntityRecords = append(n.Edges.EntityRecords, e) }); err != nil {
+	if query := _q.withFieldValues; query != nil {
+		if err := _q.loadFieldValues(ctx, query, nodes,
+			func(n *EntityRecord) { n.Edges.FieldValues = []*EntityFieldValue{} },
+			func(n *EntityRecord, e *EntityFieldValue) { n.Edges.FieldValues = append(n.Edges.FieldValues, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *SchemaDefQuery) loadFieldDefs(ctx context.Context, query *FieldDefQuery, nodes []*SchemaDef, init func(*SchemaDef), assign func(*SchemaDef, *FieldDef)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*SchemaDef)
+func (_q *EntityRecordQuery) loadSchemaDef(ctx context.Context, query *SchemaDefQuery, nodes []*EntityRecord, init func(*EntityRecord), assign func(*EntityRecord, *SchemaDef)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*EntityRecord)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		if nodes[i].schema_def_entity_records == nil {
+			continue
 		}
+		fk := *nodes[i].schema_def_entity_records
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.FieldDef(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(schemadef.FieldDefsColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(schemadef.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.schema_def_field_defs
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "schema_def_field_defs" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "schema_def_field_defs" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "schema_def_entity_records" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
-func (_q *SchemaDefQuery) loadEntityRecords(ctx context.Context, query *EntityRecordQuery, nodes []*SchemaDef, init func(*SchemaDef), assign func(*SchemaDef, *EntityRecord)) error {
+func (_q *EntityRecordQuery) loadFieldValues(ctx context.Context, query *EntityFieldValueQuery, nodes []*EntityRecord, init func(*EntityRecord), assign func(*EntityRecord, *EntityFieldValue)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*SchemaDef)
+	nodeids := make(map[int]*EntityRecord)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -489,28 +497,28 @@ func (_q *SchemaDefQuery) loadEntityRecords(ctx context.Context, query *EntityRe
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.EntityRecord(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(schemadef.EntityRecordsColumn), fks...))
+	query.Where(predicate.EntityFieldValue(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(entityrecord.FieldValuesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.schema_def_entity_records
+		fk := n.entity_record_field_values
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "schema_def_entity_records" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "entity_record_field_values" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "schema_def_entity_records" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "entity_record_field_values" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *SchemaDefQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *EntityRecordQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -519,8 +527,8 @@ func (_q *SchemaDefQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *SchemaDefQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(schemadef.Table, schemadef.Columns, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
+func (_q *EntityRecordQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(entityrecord.Table, entityrecord.Columns, sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -529,9 +537,9 @@ func (_q *SchemaDefQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, schemadef.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, entityrecord.FieldID)
 		for i := range fields {
-			if fields[i] != schemadef.FieldID {
+			if fields[i] != entityrecord.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -559,12 +567,12 @@ func (_q *SchemaDefQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *SchemaDefQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *EntityRecordQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(schemadef.Table)
+	t1 := builder.Table(entityrecord.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = schemadef.Columns
+		columns = entityrecord.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -591,28 +599,28 @@ func (_q *SchemaDefQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// SchemaDefGroupBy is the group-by builder for SchemaDef entities.
-type SchemaDefGroupBy struct {
+// EntityRecordGroupBy is the group-by builder for EntityRecord entities.
+type EntityRecordGroupBy struct {
 	selector
-	build *SchemaDefQuery
+	build *EntityRecordQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *SchemaDefGroupBy) Aggregate(fns ...AggregateFunc) *SchemaDefGroupBy {
+func (_g *EntityRecordGroupBy) Aggregate(fns ...AggregateFunc) *EntityRecordGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *SchemaDefGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *EntityRecordGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SchemaDefQuery, *SchemaDefGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*EntityRecordQuery, *EntityRecordGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *SchemaDefGroupBy) sqlScan(ctx context.Context, root *SchemaDefQuery, v any) error {
+func (_g *EntityRecordGroupBy) sqlScan(ctx context.Context, root *EntityRecordQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -639,28 +647,28 @@ func (_g *SchemaDefGroupBy) sqlScan(ctx context.Context, root *SchemaDefQuery, v
 	return sql.ScanSlice(rows, v)
 }
 
-// SchemaDefSelect is the builder for selecting fields of SchemaDef entities.
-type SchemaDefSelect struct {
-	*SchemaDefQuery
+// EntityRecordSelect is the builder for selecting fields of EntityRecord entities.
+type EntityRecordSelect struct {
+	*EntityRecordQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *SchemaDefSelect) Aggregate(fns ...AggregateFunc) *SchemaDefSelect {
+func (_s *EntityRecordSelect) Aggregate(fns ...AggregateFunc) *EntityRecordSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *SchemaDefSelect) Scan(ctx context.Context, v any) error {
+func (_s *EntityRecordSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SchemaDefQuery, *SchemaDefSelect](ctx, _s.SchemaDefQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*EntityRecordQuery, *EntityRecordSelect](ctx, _s.EntityRecordQuery, _s, _s.inters, v)
 }
 
-func (_s *SchemaDefSelect) sqlScan(ctx context.Context, root *SchemaDefQuery, v any) error {
+func (_s *EntityRecordSelect) sqlScan(ctx context.Context, root *EntityRecordQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

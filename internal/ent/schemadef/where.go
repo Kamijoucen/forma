@@ -318,6 +318,29 @@ func HasFieldDefsWith(preds ...predicate.FieldDef) predicate.SchemaDef {
 	})
 }
 
+// HasEntityRecords applies the HasEdge predicate on the "entityRecords" edge.
+func HasEntityRecords() predicate.SchemaDef {
+	return predicate.SchemaDef(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EntityRecordsTable, EntityRecordsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEntityRecordsWith applies the HasEdge predicate on the "entityRecords" edge with a given conditions (other predicates).
+func HasEntityRecordsWith(preds ...predicate.EntityRecord) predicate.SchemaDef {
+	return predicate.SchemaDef(func(s *sql.Selector) {
+		step := newEntityRecordsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.SchemaDef) predicate.SchemaDef {
 	return predicate.SchemaDef(sql.AndPredicates(predicates...))

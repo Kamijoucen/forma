@@ -6,8 +6,13 @@ package schema
 import (
 	"context"
 
+	"forma/internal/ent"
+	"forma/internal/ent/fielddef"
+	"forma/internal/ent/schemadef"
+	"forma/internal/errorx"
 	"forma/internal/svc"
 	"forma/internal/types"
+	"forma/internal/util"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +32,28 @@ func NewSchemaDeleteLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sche
 }
 
 func (l *SchemaDeleteLogic) SchemaDelete(req *types.SchemaDeleteReq) error {
-	// todo: add your logic here and delete this line
+	return util.WithTx(l.ctx, l.svcCtx.Ent, func(tx *ent.Tx) error {
+		// 查找 Schema
+		sd, err := tx.SchemaDef.
+			Query().
+			Where(schemadef.NameEQ(req.Name)).
+			Only(l.ctx)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return errorx.ErrNotFound
+			}
+			return err
+		}
 
-	return nil
+		// 级联删除关联的 FieldDef
+		if _, err := tx.FieldDef.
+			Delete().
+			Where(fielddef.HasSchemaDefWith(schemadef.IDEQ(sd.ID))).
+			Exec(l.ctx); err != nil {
+			return err
+		}
+
+		// 删除 SchemaDef
+		return tx.SchemaDef.DeleteOne(sd).Exec(l.ctx)
+	})
 }

@@ -25,9 +25,12 @@
 HTTP Request → Handler（HTTP 关注点） → Logic（业务逻辑） → Ent Client
                                           ↓
                                    ServiceContext（依赖注入）
+                                          ↓
+                                   Service（公共业务函数）
 ```
 - Handler：仅处理请求解析和响应，不含业务逻辑
-- Logic：所有业务逻辑，通过 `svcCtx` 访问依赖
+- Logic：业务编排，通过 `svcCtx` 访问依赖，调用 service 层公共函数
+- Service（`internal/service/`）：跨 Logic 复用的公共业务函数，纯函数，不建 struct，如校验、实体转换等
 - ServiceContext：统一管理配置、数据库连接等依赖
 
 ## 工作流

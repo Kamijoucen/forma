@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// EntityFieldValue is the predicate function for entityfieldvalue builders.
+type EntityFieldValue func(*sql.Selector)
+
+// EntityRecord is the predicate function for entityrecord builders.
+type EntityRecord func(*sql.Selector)
+
 // FieldDef is the predicate function for fielddef builders.
 type FieldDef func(*sql.Selector)
 

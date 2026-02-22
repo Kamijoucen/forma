@@ -3,8 +3,8 @@ syntax = "v1"
 import "common.api"
 
 type EntityCreateReq {
-	SchemaName string       `json:"schemaName"`
-	Fields     []FieldValue `json:"fields"`
+	SchemaName string        `json:"schemaName"`
+	Fields     []*FieldValue `json:"fields"`
 }
 
 type EntityCreateResp {
@@ -12,9 +12,9 @@ type EntityCreateResp {
 }
 
 type EntityUpdateReq {
-	SchemaName string       `json:"schemaName"`
-	Id         string       `json:"id"`
-	Fields     []FieldValue `json:"fields"`
+	SchemaName string        `json:"schemaName"`
+	Id         string        `json:"id"`
+	Fields     []*FieldValue `json:"fields"`
 }
 
 type EntityDeleteReq {
@@ -28,11 +28,11 @@ type EntityDetailReq {
 }
 
 type EntityDetailResp {
-	Id         string       `json:"id"`
-	SchemaName string       `json:"schemaName"`
-	Fields     []FieldValue `json:"fields"`
-	CreatedAt  string       `json:"createdAt"`
-	UpdatedAt  string       `json:"updatedAt"`
+	Id         string        `json:"id"`
+	SchemaName string        `json:"schemaName"`
+	Fields     []*FieldValue `json:"fields"`
+	CreatedAt  string        `json:"createdAt"`
+	UpdatedAt  string        `json:"updatedAt"`
 }
 
 type EntityListReq {
@@ -43,6 +43,6 @@ type EntityListReq {
 
 type EntityListResp {
 	Total int64              `json:"total"`
-	List  []EntityDetailResp `json:"list"`
+	List  []*EntityDetailResp `json:"list"`
 }
 

@@ -6,6 +6,10 @@ package schema
 import (
 	"context"
 
+	"forma/internal/ent"
+	"forma/internal/ent/schemadef"
+	"forma/internal/errorx"
+	"forma/internal/service"
 	"forma/internal/svc"
 	"forma/internal/types"
 
@@ -27,7 +31,16 @@ func NewSchemaDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sche
 }
 
 func (l *SchemaDetailLogic) SchemaDetail(req *types.SchemaDetailReq) (resp *types.SchemaDetailResp, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+	sd, err := l.svcCtx.Ent.SchemaDef.
+		Query().
+		Where(schemadef.NameEQ(req.Name)).
+		WithFieldDefs().
+		Only(l.ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errorx.ErrNotFound
+		}
+		return nil, err
+	}
+	return service.ToSchemaDetailResp(sd), nil
 }

@@ -8,6 +8,30 @@ import (
 	"forma/internal/ent"
 )
 
+// The EntityFieldValueFunc type is an adapter to allow the use of ordinary
+// function as EntityFieldValue mutator.
+type EntityFieldValueFunc func(context.Context, *ent.EntityFieldValueMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EntityFieldValueFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EntityFieldValueMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EntityFieldValueMutation", m)
+}
+
+// The EntityRecordFunc type is an adapter to allow the use of ordinary
+// function as EntityRecord mutator.
+type EntityRecordFunc func(context.Context, *ent.EntityRecordMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EntityRecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EntityRecordMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EntityRecordMutation", m)
+}
+
 // The FieldDefFunc type is an adapter to allow the use of ordinary
 // function as FieldDef mutator.
 type FieldDefFunc func(context.Context, *ent.FieldDefMutation) (ent.Value, error)

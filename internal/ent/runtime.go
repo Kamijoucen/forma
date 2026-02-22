@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"forma/internal/ent/entityfieldvalue"
+	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schema"
 	"forma/internal/ent/schemadef"
@@ -13,6 +15,31 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	entityfieldvalueFields := schema.EntityFieldValue{}.Fields()
+	_ = entityfieldvalueFields
+	// entityfieldvalueDescName is the schema descriptor for name field.
+	entityfieldvalueDescName := entityfieldvalueFields[0].Descriptor()
+	// entityfieldvalue.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	entityfieldvalue.NameValidator = entityfieldvalueDescName.Validators[0].(func(string) error)
+	// entityfieldvalueDescValue is the schema descriptor for value field.
+	entityfieldvalueDescValue := entityfieldvalueFields[2].Descriptor()
+	// entityfieldvalue.DefaultValue holds the default value on creation for the value field.
+	entityfieldvalue.DefaultValue = entityfieldvalueDescValue.Default.(string)
+	entityrecordMixin := schema.EntityRecord{}.Mixin()
+	entityrecordMixinFields0 := entityrecordMixin[0].Fields()
+	_ = entityrecordMixinFields0
+	entityrecordFields := schema.EntityRecord{}.Fields()
+	_ = entityrecordFields
+	// entityrecordDescCreateTime is the schema descriptor for create_time field.
+	entityrecordDescCreateTime := entityrecordMixinFields0[0].Descriptor()
+	// entityrecord.DefaultCreateTime holds the default value on creation for the create_time field.
+	entityrecord.DefaultCreateTime = entityrecordDescCreateTime.Default.(func() time.Time)
+	// entityrecordDescUpdateTime is the schema descriptor for update_time field.
+	entityrecordDescUpdateTime := entityrecordMixinFields0[1].Descriptor()
+	// entityrecord.DefaultUpdateTime holds the default value on creation for the update_time field.
+	entityrecord.DefaultUpdateTime = entityrecordDescUpdateTime.Default.(func() time.Time)
+	// entityrecord.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	entityrecord.UpdateDefaultUpdateTime = entityrecordDescUpdateTime.UpdateDefault.(func() time.Time)
 	fielddefMixin := schema.FieldDef{}.Mixin()
 	fielddefMixinFields0 := fielddefMixin[0].Fields()
 	_ = fielddefMixinFields0

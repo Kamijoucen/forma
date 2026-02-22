@@ -11,6 +11,8 @@ import (
 
 	"forma/internal/ent/migrate"
 
+	"forma/internal/ent/entityfieldvalue"
+	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
 
@@ -25,6 +27,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// EntityFieldValue is the client for interacting with the EntityFieldValue builders.
+	EntityFieldValue *EntityFieldValueClient
+	// EntityRecord is the client for interacting with the EntityRecord builders.
+	EntityRecord *EntityRecordClient
 	// FieldDef is the client for interacting with the FieldDef builders.
 	FieldDef *FieldDefClient
 	// SchemaDef is the client for interacting with the SchemaDef builders.
@@ -40,6 +46,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.EntityFieldValue = NewEntityFieldValueClient(c.config)
+	c.EntityRecord = NewEntityRecordClient(c.config)
 	c.FieldDef = NewFieldDefClient(c.config)
 	c.SchemaDef = NewSchemaDefClient(c.config)
 }
@@ -132,10 +140,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		FieldDef:  NewFieldDefClient(cfg),
-		SchemaDef: NewSchemaDefClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		EntityFieldValue: NewEntityFieldValueClient(cfg),
+		EntityRecord:     NewEntityRecordClient(cfg),
+		FieldDef:         NewFieldDefClient(cfg),
+		SchemaDef:        NewSchemaDefClient(cfg),
 	}, nil
 }
 
@@ -153,17 +163,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		FieldDef:  NewFieldDefClient(cfg),
-		SchemaDef: NewSchemaDefClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		EntityFieldValue: NewEntityFieldValueClient(cfg),
+		EntityRecord:     NewEntityRecordClient(cfg),
+		FieldDef:         NewFieldDefClient(cfg),
+		SchemaDef:        NewSchemaDefClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		FieldDef.
+//		EntityFieldValue.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -185,6 +197,8 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.EntityFieldValue.Use(hooks...)
+	c.EntityRecord.Use(hooks...)
 	c.FieldDef.Use(hooks...)
 	c.SchemaDef.Use(hooks...)
 }
@@ -192,6 +206,8 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.EntityFieldValue.Intercept(interceptors...)
+	c.EntityRecord.Intercept(interceptors...)
 	c.FieldDef.Intercept(interceptors...)
 	c.SchemaDef.Intercept(interceptors...)
 }
@@ -199,12 +215,330 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *EntityFieldValueMutation:
+		return c.EntityFieldValue.mutate(ctx, m)
+	case *EntityRecordMutation:
+		return c.EntityRecord.mutate(ctx, m)
 	case *FieldDefMutation:
 		return c.FieldDef.mutate(ctx, m)
 	case *SchemaDefMutation:
 		return c.SchemaDef.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// EntityFieldValueClient is a client for the EntityFieldValue schema.
+type EntityFieldValueClient struct {
+	config
+}
+
+// NewEntityFieldValueClient returns a client for the EntityFieldValue from the given config.
+func NewEntityFieldValueClient(c config) *EntityFieldValueClient {
+	return &EntityFieldValueClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `entityfieldvalue.Hooks(f(g(h())))`.
+func (c *EntityFieldValueClient) Use(hooks ...Hook) {
+	c.hooks.EntityFieldValue = append(c.hooks.EntityFieldValue, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `entityfieldvalue.Intercept(f(g(h())))`.
+func (c *EntityFieldValueClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EntityFieldValue = append(c.inters.EntityFieldValue, interceptors...)
+}
+
+// Create returns a builder for creating a EntityFieldValue entity.
+func (c *EntityFieldValueClient) Create() *EntityFieldValueCreate {
+	mutation := newEntityFieldValueMutation(c.config, OpCreate)
+	return &EntityFieldValueCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EntityFieldValue entities.
+func (c *EntityFieldValueClient) CreateBulk(builders ...*EntityFieldValueCreate) *EntityFieldValueCreateBulk {
+	return &EntityFieldValueCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EntityFieldValueClient) MapCreateBulk(slice any, setFunc func(*EntityFieldValueCreate, int)) *EntityFieldValueCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EntityFieldValueCreateBulk{err: fmt.Errorf("calling to EntityFieldValueClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EntityFieldValueCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EntityFieldValueCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EntityFieldValue.
+func (c *EntityFieldValueClient) Update() *EntityFieldValueUpdate {
+	mutation := newEntityFieldValueMutation(c.config, OpUpdate)
+	return &EntityFieldValueUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EntityFieldValueClient) UpdateOne(_m *EntityFieldValue) *EntityFieldValueUpdateOne {
+	mutation := newEntityFieldValueMutation(c.config, OpUpdateOne, withEntityFieldValue(_m))
+	return &EntityFieldValueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EntityFieldValueClient) UpdateOneID(id int) *EntityFieldValueUpdateOne {
+	mutation := newEntityFieldValueMutation(c.config, OpUpdateOne, withEntityFieldValueID(id))
+	return &EntityFieldValueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EntityFieldValue.
+func (c *EntityFieldValueClient) Delete() *EntityFieldValueDelete {
+	mutation := newEntityFieldValueMutation(c.config, OpDelete)
+	return &EntityFieldValueDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EntityFieldValueClient) DeleteOne(_m *EntityFieldValue) *EntityFieldValueDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EntityFieldValueClient) DeleteOneID(id int) *EntityFieldValueDeleteOne {
+	builder := c.Delete().Where(entityfieldvalue.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EntityFieldValueDeleteOne{builder}
+}
+
+// Query returns a query builder for EntityFieldValue.
+func (c *EntityFieldValueClient) Query() *EntityFieldValueQuery {
+	return &EntityFieldValueQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEntityFieldValue},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EntityFieldValue entity by its id.
+func (c *EntityFieldValueClient) Get(ctx context.Context, id int) (*EntityFieldValue, error) {
+	return c.Query().Where(entityfieldvalue.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EntityFieldValueClient) GetX(ctx context.Context, id int) *EntityFieldValue {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEntityRecord queries the entityRecord edge of a EntityFieldValue.
+func (c *EntityFieldValueClient) QueryEntityRecord(_m *EntityFieldValue) *EntityRecordQuery {
+	query := (&EntityRecordClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(entityfieldvalue.Table, entityfieldvalue.FieldID, id),
+			sqlgraph.To(entityrecord.Table, entityrecord.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, entityfieldvalue.EntityRecordTable, entityfieldvalue.EntityRecordColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EntityFieldValueClient) Hooks() []Hook {
+	return c.hooks.EntityFieldValue
+}
+
+// Interceptors returns the client interceptors.
+func (c *EntityFieldValueClient) Interceptors() []Interceptor {
+	return c.inters.EntityFieldValue
+}
+
+func (c *EntityFieldValueClient) mutate(ctx context.Context, m *EntityFieldValueMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EntityFieldValueCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EntityFieldValueUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EntityFieldValueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EntityFieldValueDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EntityFieldValue mutation op: %q", m.Op())
+	}
+}
+
+// EntityRecordClient is a client for the EntityRecord schema.
+type EntityRecordClient struct {
+	config
+}
+
+// NewEntityRecordClient returns a client for the EntityRecord from the given config.
+func NewEntityRecordClient(c config) *EntityRecordClient {
+	return &EntityRecordClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `entityrecord.Hooks(f(g(h())))`.
+func (c *EntityRecordClient) Use(hooks ...Hook) {
+	c.hooks.EntityRecord = append(c.hooks.EntityRecord, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `entityrecord.Intercept(f(g(h())))`.
+func (c *EntityRecordClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EntityRecord = append(c.inters.EntityRecord, interceptors...)
+}
+
+// Create returns a builder for creating a EntityRecord entity.
+func (c *EntityRecordClient) Create() *EntityRecordCreate {
+	mutation := newEntityRecordMutation(c.config, OpCreate)
+	return &EntityRecordCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EntityRecord entities.
+func (c *EntityRecordClient) CreateBulk(builders ...*EntityRecordCreate) *EntityRecordCreateBulk {
+	return &EntityRecordCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EntityRecordClient) MapCreateBulk(slice any, setFunc func(*EntityRecordCreate, int)) *EntityRecordCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EntityRecordCreateBulk{err: fmt.Errorf("calling to EntityRecordClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EntityRecordCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EntityRecordCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EntityRecord.
+func (c *EntityRecordClient) Update() *EntityRecordUpdate {
+	mutation := newEntityRecordMutation(c.config, OpUpdate)
+	return &EntityRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EntityRecordClient) UpdateOne(_m *EntityRecord) *EntityRecordUpdateOne {
+	mutation := newEntityRecordMutation(c.config, OpUpdateOne, withEntityRecord(_m))
+	return &EntityRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EntityRecordClient) UpdateOneID(id int) *EntityRecordUpdateOne {
+	mutation := newEntityRecordMutation(c.config, OpUpdateOne, withEntityRecordID(id))
+	return &EntityRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EntityRecord.
+func (c *EntityRecordClient) Delete() *EntityRecordDelete {
+	mutation := newEntityRecordMutation(c.config, OpDelete)
+	return &EntityRecordDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EntityRecordClient) DeleteOne(_m *EntityRecord) *EntityRecordDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EntityRecordClient) DeleteOneID(id int) *EntityRecordDeleteOne {
+	builder := c.Delete().Where(entityrecord.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EntityRecordDeleteOne{builder}
+}
+
+// Query returns a query builder for EntityRecord.
+func (c *EntityRecordClient) Query() *EntityRecordQuery {
+	return &EntityRecordQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEntityRecord},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EntityRecord entity by its id.
+func (c *EntityRecordClient) Get(ctx context.Context, id int) (*EntityRecord, error) {
+	return c.Query().Where(entityrecord.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EntityRecordClient) GetX(ctx context.Context, id int) *EntityRecord {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySchemaDef queries the schemaDef edge of a EntityRecord.
+func (c *EntityRecordClient) QuerySchemaDef(_m *EntityRecord) *SchemaDefQuery {
+	query := (&SchemaDefClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(entityrecord.Table, entityrecord.FieldID, id),
+			sqlgraph.To(schemadef.Table, schemadef.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, entityrecord.SchemaDefTable, entityrecord.SchemaDefColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFieldValues queries the fieldValues edge of a EntityRecord.
+func (c *EntityRecordClient) QueryFieldValues(_m *EntityRecord) *EntityFieldValueQuery {
+	query := (&EntityFieldValueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(entityrecord.Table, entityrecord.FieldID, id),
+			sqlgraph.To(entityfieldvalue.Table, entityfieldvalue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, entityrecord.FieldValuesTable, entityrecord.FieldValuesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EntityRecordClient) Hooks() []Hook {
+	return c.hooks.EntityRecord
+}
+
+// Interceptors returns the client interceptors.
+func (c *EntityRecordClient) Interceptors() []Interceptor {
+	return c.inters.EntityRecord
+}
+
+func (c *EntityRecordClient) mutate(ctx context.Context, m *EntityRecordMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EntityRecordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EntityRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EntityRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EntityRecordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EntityRecord mutation op: %q", m.Op())
 	}
 }
 
@@ -481,6 +815,22 @@ func (c *SchemaDefClient) QueryFieldDefs(_m *SchemaDef) *FieldDefQuery {
 	return query
 }
 
+// QueryEntityRecords queries the entityRecords edge of a SchemaDef.
+func (c *SchemaDefClient) QueryEntityRecords(_m *SchemaDef) *EntityRecordQuery {
+	query := (&EntityRecordClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(schemadef.Table, schemadef.FieldID, id),
+			sqlgraph.To(entityrecord.Table, entityrecord.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, schemadef.EntityRecordsTable, schemadef.EntityRecordsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *SchemaDefClient) Hooks() []Hook {
 	return c.hooks.SchemaDef
@@ -509,9 +859,9 @@ func (c *SchemaDefClient) mutate(ctx context.Context, m *SchemaDefMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		FieldDef, SchemaDef []ent.Hook
+		EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Hook
 	}
 	inters struct {
-		FieldDef, SchemaDef []ent.Interceptor
+		EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Interceptor
 	}
 )
