@@ -35,20 +35,6 @@ func (_u *SchemaDefUpdate) SetUpdateTime(v time.Time) *SchemaDefUpdate {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *SchemaDefUpdate) SetName(v string) *SchemaDefUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *SchemaDefUpdate) SetNillableName(v *string) *SchemaDefUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
 // SetDescription sets the "description" field.
 func (_u *SchemaDefUpdate) SetDescription(v string) *SchemaDefUpdate {
 	_u.mutation.SetDescription(v)
@@ -146,20 +132,7 @@ func (_u *SchemaDefUpdate) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *SchemaDefUpdate) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := schemadef.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SchemaDef.name": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(schemadef.Table, schemadef.Columns, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -170,9 +143,6 @@ func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdateTime(); ok {
 		_spec.SetField(schemadef.FieldUpdateTime, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(schemadef.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(schemadef.FieldDescription, field.TypeString, value)
@@ -248,20 +218,6 @@ type SchemaDefUpdateOne struct {
 // SetUpdateTime sets the "update_time" field.
 func (_u *SchemaDefUpdateOne) SetUpdateTime(v time.Time) *SchemaDefUpdateOne {
 	_u.mutation.SetUpdateTime(v)
-	return _u
-}
-
-// SetName sets the "name" field.
-func (_u *SchemaDefUpdateOne) SetName(v string) *SchemaDefUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *SchemaDefUpdateOne) SetNillableName(v *string) *SchemaDefUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
 	return _u
 }
 
@@ -375,20 +331,7 @@ func (_u *SchemaDefUpdateOne) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *SchemaDefUpdateOne) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := schemadef.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SchemaDef.name": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(schemadef.Table, schemadef.Columns, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -416,9 +359,6 @@ func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, er
 	}
 	if value, ok := _u.mutation.UpdateTime(); ok {
 		_spec.SetField(schemadef.FieldUpdateTime, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(schemadef.FieldName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(schemadef.FieldDescription, field.TypeString, value)

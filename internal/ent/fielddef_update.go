@@ -13,6 +13,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -32,20 +33,6 @@ func (_u *FieldDefUpdate) Where(ps ...predicate.FieldDef) *FieldDefUpdate {
 // SetUpdateTime sets the "update_time" field.
 func (_u *FieldDefUpdate) SetUpdateTime(v time.Time) *FieldDefUpdate {
 	_u.mutation.SetUpdateTime(v)
-	return _u
-}
-
-// SetName sets the "name" field.
-func (_u *FieldDefUpdate) SetName(v string) *FieldDefUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *FieldDefUpdate) SetNillableName(v *string) *FieldDefUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
 	return _u
 }
 
@@ -102,6 +89,24 @@ func (_u *FieldDefUpdate) SetNillableMinLength(v *int) *FieldDefUpdate {
 // AddMinLength adds value to the "minLength" field.
 func (_u *FieldDefUpdate) AddMinLength(v int) *FieldDefUpdate {
 	_u.mutation.AddMinLength(v)
+	return _u
+}
+
+// SetEnumValues sets the "enumValues" field.
+func (_u *FieldDefUpdate) SetEnumValues(v []string) *FieldDefUpdate {
+	_u.mutation.SetEnumValues(v)
+	return _u
+}
+
+// AppendEnumValues appends value to the "enumValues" field.
+func (_u *FieldDefUpdate) AppendEnumValues(v []string) *FieldDefUpdate {
+	_u.mutation.AppendEnumValues(v)
+	return _u
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (_u *FieldDefUpdate) ClearEnumValues() *FieldDefUpdate {
+	_u.mutation.ClearEnumValues()
 	return _u
 }
 
@@ -191,20 +196,7 @@ func (_u *FieldDefUpdate) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *FieldDefUpdate) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := fielddef.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "FieldDef.name": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(fielddef.Table, fielddef.Columns, sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -215,12 +207,6 @@ func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdateTime(); ok {
 		_spec.SetField(fielddef.FieldUpdateTime, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(fielddef.FieldName, field.TypeString, value)
-	}
-	if _u.mutation.TypeCleared() {
-		_spec.ClearField(fielddef.FieldType, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.Required(); ok {
 		_spec.SetField(fielddef.FieldRequired, field.TypeBool, value)
@@ -236,6 +222,17 @@ func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedMinLength(); ok {
 		_spec.AddField(fielddef.FieldMinLength, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.EnumValues(); ok {
+		_spec.SetField(fielddef.FieldEnumValues, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEnumValues(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, fielddef.FieldEnumValues, value)
+		})
+	}
+	if _u.mutation.EnumValuesCleared() {
+		_spec.ClearField(fielddef.FieldEnumValues, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(fielddef.FieldDescription, field.TypeString, value)
@@ -298,20 +295,6 @@ func (_u *FieldDefUpdateOne) SetUpdateTime(v time.Time) *FieldDefUpdateOne {
 	return _u
 }
 
-// SetName sets the "name" field.
-func (_u *FieldDefUpdateOne) SetName(v string) *FieldDefUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *FieldDefUpdateOne) SetNillableName(v *string) *FieldDefUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
 // SetRequired sets the "required" field.
 func (_u *FieldDefUpdateOne) SetRequired(v bool) *FieldDefUpdateOne {
 	_u.mutation.SetRequired(v)
@@ -365,6 +348,24 @@ func (_u *FieldDefUpdateOne) SetNillableMinLength(v *int) *FieldDefUpdateOne {
 // AddMinLength adds value to the "minLength" field.
 func (_u *FieldDefUpdateOne) AddMinLength(v int) *FieldDefUpdateOne {
 	_u.mutation.AddMinLength(v)
+	return _u
+}
+
+// SetEnumValues sets the "enumValues" field.
+func (_u *FieldDefUpdateOne) SetEnumValues(v []string) *FieldDefUpdateOne {
+	_u.mutation.SetEnumValues(v)
+	return _u
+}
+
+// AppendEnumValues appends value to the "enumValues" field.
+func (_u *FieldDefUpdateOne) AppendEnumValues(v []string) *FieldDefUpdateOne {
+	_u.mutation.AppendEnumValues(v)
+	return _u
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (_u *FieldDefUpdateOne) ClearEnumValues() *FieldDefUpdateOne {
+	_u.mutation.ClearEnumValues()
 	return _u
 }
 
@@ -467,20 +468,7 @@ func (_u *FieldDefUpdateOne) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (_u *FieldDefUpdateOne) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := fielddef.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "FieldDef.name": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err error) {
-	if err := _u.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(fielddef.Table, fielddef.Columns, sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -509,12 +497,6 @@ func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err 
 	if value, ok := _u.mutation.UpdateTime(); ok {
 		_spec.SetField(fielddef.FieldUpdateTime, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(fielddef.FieldName, field.TypeString, value)
-	}
-	if _u.mutation.TypeCleared() {
-		_spec.ClearField(fielddef.FieldType, field.TypeEnum)
-	}
 	if value, ok := _u.mutation.Required(); ok {
 		_spec.SetField(fielddef.FieldRequired, field.TypeBool, value)
 	}
@@ -529,6 +511,17 @@ func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err 
 	}
 	if value, ok := _u.mutation.AddedMinLength(); ok {
 		_spec.AddField(fielddef.FieldMinLength, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.EnumValues(); ok {
+		_spec.SetField(fielddef.FieldEnumValues, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedEnumValues(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, fielddef.FieldEnumValues, value)
+		})
+	}
+	if _u.mutation.EnumValuesCleared() {
+		_spec.ClearField(fielddef.FieldEnumValues, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(fielddef.FieldDescription, field.TypeString, value)

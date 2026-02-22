@@ -29,6 +29,8 @@ const (
 	FieldMaxLength = "max_length"
 	// FieldMinLength holds the string denoting the minlength field in the database.
 	FieldMinLength = "min_length"
+	// FieldEnumValues holds the string denoting the enumvalues field in the database.
+	FieldEnumValues = "enum_values"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// EdgeSchemaDef holds the string denoting the schemadef edge name in mutations.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldRequired,
 	FieldMaxLength,
 	FieldMinLength,
+	FieldEnumValues,
 	FieldDescription,
 }
 

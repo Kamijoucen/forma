@@ -6,7 +6,6 @@
         {
             "label": "gen-api",
             "type": "shell",
-            // "command": "goctl api go -style go_zero -api business.api -dir . --home ./template",
             "command": "goctl api go -style go_zero -api forma.api -dir .",
             "options": {
                 "cwd": "${workspaceFolder}"

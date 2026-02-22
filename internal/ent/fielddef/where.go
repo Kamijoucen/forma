@@ -255,16 +255,6 @@ func TypeNotIn(vs ...Type) predicate.FieldDef {
 	return predicate.FieldDef(sql.FieldNotIn(FieldType, vs...))
 }
 
-// TypeIsNil applies the IsNil predicate on the "type" field.
-func TypeIsNil() predicate.FieldDef {
-	return predicate.FieldDef(sql.FieldIsNull(FieldType))
-}
-
-// TypeNotNil applies the NotNil predicate on the "type" field.
-func TypeNotNil() predicate.FieldDef {
-	return predicate.FieldDef(sql.FieldNotNull(FieldType))
-}
-
 // RequiredEQ applies the EQ predicate on the "required" field.
 func RequiredEQ(v bool) predicate.FieldDef {
 	return predicate.FieldDef(sql.FieldEQ(FieldRequired, v))
@@ -353,6 +343,16 @@ func MinLengthLT(v int) predicate.FieldDef {
 // MinLengthLTE applies the LTE predicate on the "minLength" field.
 func MinLengthLTE(v int) predicate.FieldDef {
 	return predicate.FieldDef(sql.FieldLTE(FieldMinLength, v))
+}
+
+// EnumValuesIsNil applies the IsNil predicate on the "enumValues" field.
+func EnumValuesIsNil() predicate.FieldDef {
+	return predicate.FieldDef(sql.FieldIsNull(FieldEnumValues))
+}
+
+// EnumValuesNotNil applies the NotNil predicate on the "enumValues" field.
+func EnumValuesNotNil() predicate.FieldDef {
+	return predicate.FieldDef(sql.FieldNotNull(FieldEnumValues))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

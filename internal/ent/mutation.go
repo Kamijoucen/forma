@@ -44,6 +44,8 @@ type FieldDefMutation struct {
 	addmaxLength     *int
 	minLength        *int
 	addminLength     *int
+	enumValues       *[]string
+	appendenumValues []string
 	description      *string
 	clearedFields    map[string]struct{}
 	schemaDef        *int
@@ -290,22 +292,9 @@ func (m *FieldDefMutation) OldType(ctx context.Context) (v fielddef.Type, err er
 	return oldValue.Type, nil
 }
 
-// ClearType clears the value of the "type" field.
-func (m *FieldDefMutation) ClearType() {
-	m._type = nil
-	m.clearedFields[fielddef.FieldType] = struct{}{}
-}
-
-// TypeCleared returns if the "type" field was cleared in this mutation.
-func (m *FieldDefMutation) TypeCleared() bool {
-	_, ok := m.clearedFields[fielddef.FieldType]
-	return ok
-}
-
 // ResetType resets all changes to the "type" field.
 func (m *FieldDefMutation) ResetType() {
 	m._type = nil
-	delete(m.clearedFields, fielddef.FieldType)
 }
 
 // SetRequired sets the "required" field.
@@ -456,6 +445,71 @@ func (m *FieldDefMutation) ResetMinLength() {
 	m.addminLength = nil
 }
 
+// SetEnumValues sets the "enumValues" field.
+func (m *FieldDefMutation) SetEnumValues(s []string) {
+	m.enumValues = &s
+	m.appendenumValues = nil
+}
+
+// EnumValues returns the value of the "enumValues" field in the mutation.
+func (m *FieldDefMutation) EnumValues() (r []string, exists bool) {
+	v := m.enumValues
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnumValues returns the old "enumValues" field's value of the FieldDef entity.
+// If the FieldDef object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FieldDefMutation) OldEnumValues(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnumValues is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnumValues requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnumValues: %w", err)
+	}
+	return oldValue.EnumValues, nil
+}
+
+// AppendEnumValues adds s to the "enumValues" field.
+func (m *FieldDefMutation) AppendEnumValues(s []string) {
+	m.appendenumValues = append(m.appendenumValues, s...)
+}
+
+// AppendedEnumValues returns the list of values that were appended to the "enumValues" field in this mutation.
+func (m *FieldDefMutation) AppendedEnumValues() ([]string, bool) {
+	if len(m.appendenumValues) == 0 {
+		return nil, false
+	}
+	return m.appendenumValues, true
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (m *FieldDefMutation) ClearEnumValues() {
+	m.enumValues = nil
+	m.appendenumValues = nil
+	m.clearedFields[fielddef.FieldEnumValues] = struct{}{}
+}
+
+// EnumValuesCleared returns if the "enumValues" field was cleared in this mutation.
+func (m *FieldDefMutation) EnumValuesCleared() bool {
+	_, ok := m.clearedFields[fielddef.FieldEnumValues]
+	return ok
+}
+
+// ResetEnumValues resets all changes to the "enumValues" field.
+func (m *FieldDefMutation) ResetEnumValues() {
+	m.enumValues = nil
+	m.appendenumValues = nil
+	delete(m.clearedFields, fielddef.FieldEnumValues)
+}
+
 // SetDescription sets the "description" field.
 func (m *FieldDefMutation) SetDescription(s string) {
 	m.description = &s
@@ -578,7 +632,7 @@ func (m *FieldDefMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FieldDefMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.create_time != nil {
 		fields = append(fields, fielddef.FieldCreateTime)
 	}
@@ -599,6 +653,9 @@ func (m *FieldDefMutation) Fields() []string {
 	}
 	if m.minLength != nil {
 		fields = append(fields, fielddef.FieldMinLength)
+	}
+	if m.enumValues != nil {
+		fields = append(fields, fielddef.FieldEnumValues)
 	}
 	if m.description != nil {
 		fields = append(fields, fielddef.FieldDescription)
@@ -625,6 +682,8 @@ func (m *FieldDefMutation) Field(name string) (ent.Value, bool) {
 		return m.MaxLength()
 	case fielddef.FieldMinLength:
 		return m.MinLength()
+	case fielddef.FieldEnumValues:
+		return m.EnumValues()
 	case fielddef.FieldDescription:
 		return m.Description()
 	}
@@ -650,6 +709,8 @@ func (m *FieldDefMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldMaxLength(ctx)
 	case fielddef.FieldMinLength:
 		return m.OldMinLength(ctx)
+	case fielddef.FieldEnumValues:
+		return m.OldEnumValues(ctx)
 	case fielddef.FieldDescription:
 		return m.OldDescription(ctx)
 	}
@@ -709,6 +770,13 @@ func (m *FieldDefMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMinLength(v)
+		return nil
+	case fielddef.FieldEnumValues:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnumValues(v)
 		return nil
 	case fielddef.FieldDescription:
 		v, ok := value.(string)
@@ -774,8 +842,8 @@ func (m *FieldDefMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *FieldDefMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(fielddef.FieldType) {
-		fields = append(fields, fielddef.FieldType)
+	if m.FieldCleared(fielddef.FieldEnumValues) {
+		fields = append(fields, fielddef.FieldEnumValues)
 	}
 	if m.FieldCleared(fielddef.FieldDescription) {
 		fields = append(fields, fielddef.FieldDescription)
@@ -794,8 +862,8 @@ func (m *FieldDefMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *FieldDefMutation) ClearField(name string) error {
 	switch name {
-	case fielddef.FieldType:
-		m.ClearType()
+	case fielddef.FieldEnumValues:
+		m.ClearEnumValues()
 		return nil
 	case fielddef.FieldDescription:
 		m.ClearDescription()
@@ -828,6 +896,9 @@ func (m *FieldDefMutation) ResetField(name string) error {
 		return nil
 	case fielddef.FieldMinLength:
 		m.ResetMinLength()
+		return nil
+	case fielddef.FieldEnumValues:
+		m.ResetEnumValues()
 		return nil
 	case fielddef.FieldDescription:
 		m.ResetDescription()

@@ -14,10 +14,11 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Nullable: true, Enums: []string{"string", "number", "boolean", "date"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "boolean", "date"}},
 		{Name: "required", Type: field.TypeBool, Default: false},
 		{Name: "max_length", Type: field.TypeInt, Default: 500},
 		{Name: "min_length", Type: field.TypeInt, Default: 0},
+		{Name: "enum_values", Type: field.TypeJSON, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "schema_def_field_defs", Type: field.TypeInt, Nullable: true},
 	}
@@ -29,7 +30,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "field_defs_schema_defs_fieldDefs",
-				Columns:    []*schema.Column{FieldDefsColumns[9]},
+				Columns:    []*schema.Column{FieldDefsColumns[10]},
 				RefColumns: []*schema.Column{SchemaDefsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

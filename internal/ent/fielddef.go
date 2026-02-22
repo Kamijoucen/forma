@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
@@ -32,6 +33,8 @@ type FieldDef struct {
 	MaxLength int `json:"maxLength,omitempty"`
 	// 最小长度
 	MinLength int `json:"minLength,omitempty"`
+	// 枚举值列表
+	EnumValues []string `json:"enumValues,omitempty"`
 	// 字段描述
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -66,6 +69,8 @@ func (*FieldDef) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case fielddef.FieldEnumValues:
+			values[i] = new([]byte)
 		case fielddef.FieldRequired:
 			values[i] = new(sql.NullBool)
 		case fielddef.FieldID, fielddef.FieldMaxLength, fielddef.FieldMinLength:
@@ -138,6 +143,14 @@ func (_m *FieldDef) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field minLength", values[i])
 			} else if value.Valid {
 				_m.MinLength = int(value.Int64)
+			}
+		case fielddef.FieldEnumValues:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field enumValues", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.EnumValues); err != nil {
+					return fmt.Errorf("unmarshal field enumValues: %w", err)
+				}
 			}
 		case fielddef.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -213,6 +226,9 @@ func (_m *FieldDef) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("minLength=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MinLength))
+	builder.WriteString(", ")
+	builder.WriteString("enumValues=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EnumValues))
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)

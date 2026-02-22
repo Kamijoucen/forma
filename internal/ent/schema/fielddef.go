@@ -17,11 +17,12 @@ type FieldDef struct {
 // Fields of the FieldDef.
 func (FieldDef) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty().Comment("字段名称"),
-		field.Enum("type").Values(constant.GetFieldTypes()...).Optional().Immutable().Comment("字段类型"),
+		field.String("name").NotEmpty().Immutable().Comment("字段名称"),
+		field.Enum("type").Values(constant.GetFieldTypes()...).Immutable().Comment("字段类型"),
 		field.Bool("required").Default(false).Comment("是否必填"),
 		field.Int("maxLength").Default(500).Comment("最大长度"),
 		field.Int("minLength").Default(0).Comment("最小长度"),
+		field.JSON("enumValues", []string{}).Optional().Comment("枚举值列表"),
 		field.String("description").Optional().Comment("字段描述"),
 	}
 }

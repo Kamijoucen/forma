@@ -51,10 +51,11 @@ type FieldDef struct {
 	Name         string   `json:"name"`
 	Type         string   `json:"type"` // string, int, float, bool, text, datetime, enum, json, array
 	Required     bool     `json:"required"`
-	MaxLength    int      `json:"maxLength,omitempty"`
-	DefaultValue string   `json:"defaultValue,omitempty"`
-	EnumValues   []string `json:"enumValues,omitempty"`
-	Description  string   `json:"description,omitempty"`
+	MaxLength    int      `json:"maxLength,optional"`
+	MinLength    int      `json:"minLength,optional"`
+	DefaultValue string   `json:"defaultValue,optional"`
+	EnumValues   []string `json:"enumValues,optional"`
+	Description  string   `json:"description,optional"`
 }
 
 type FieldValue struct {
@@ -65,7 +66,8 @@ type FieldValue struct {
 
 type SchemaCreateReq struct {
 	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,omitempty"`
+	DisplayName string     `json:"displayName,optional"`
+	Description string     `json:"description,optional"`
 	Fields      []FieldDef `json:"fields"`
 }
 
@@ -79,7 +81,8 @@ type SchemaDetailReq struct {
 
 type SchemaDetailResp struct {
 	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName"`
+	DisplayName string     `json:"displayName,optional"`
+	Description string     `json:"description,optional"`
 	Fields      []FieldDef `json:"fields"`
 	CreatedAt   string     `json:"createdAt"`
 	UpdatedAt   string     `json:"updatedAt"`
@@ -92,6 +95,7 @@ type SchemaListResp struct {
 
 type SchemaUpdateReq struct {
 	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName,omitempty"`
+	DisplayName string     `json:"displayName,optional"`
+	Description string     `json:"description,optional"`
 	Fields      []FieldDef `json:"fields"`
 }

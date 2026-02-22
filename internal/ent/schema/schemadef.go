@@ -15,7 +15,7 @@ type SchemaDef struct {
 // Fields of the SchemaDef.
 func (SchemaDef) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty().Comment("Schema名称"),
+		field.String("name").NotEmpty().Immutable().Comment("Schema名称"),
 		field.String("description").Optional().Comment("Schema描述"),
 	}
 }

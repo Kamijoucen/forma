@@ -63,14 +63,6 @@ func (_c *FieldDefCreate) SetType(v fielddef.Type) *FieldDefCreate {
 	return _c
 }
 
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_c *FieldDefCreate) SetNillableType(v *fielddef.Type) *FieldDefCreate {
-	if v != nil {
-		_c.SetType(*v)
-	}
-	return _c
-}
-
 // SetRequired sets the "required" field.
 func (_c *FieldDefCreate) SetRequired(v bool) *FieldDefCreate {
 	_c.mutation.SetRequired(v)
@@ -110,6 +102,12 @@ func (_c *FieldDefCreate) SetNillableMinLength(v *int) *FieldDefCreate {
 	if v != nil {
 		_c.SetMinLength(*v)
 	}
+	return _c
+}
+
+// SetEnumValues sets the "enumValues" field.
+func (_c *FieldDefCreate) SetEnumValues(v []string) *FieldDefCreate {
+	_c.mutation.SetEnumValues(v)
 	return _c
 }
 
@@ -219,6 +217,9 @@ func (_c *FieldDefCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "FieldDef.name": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "FieldDef.type"`)}
+	}
 	if v, ok := _c.mutation.GetType(); ok {
 		if err := fielddef.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "FieldDef.type": %w`, err)}
@@ -287,6 +288,10 @@ func (_c *FieldDefCreate) createSpec() (*FieldDef, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.MinLength(); ok {
 		_spec.SetField(fielddef.FieldMinLength, field.TypeInt, value)
 		_node.MinLength = value
+	}
+	if value, ok := _c.mutation.EnumValues(); ok {
+		_spec.SetField(fielddef.FieldEnumValues, field.TypeJSON, value)
+		_node.EnumValues = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(fielddef.FieldDescription, field.TypeString, value)
@@ -373,18 +378,6 @@ func (u *FieldDefUpsert) UpdateUpdateTime() *FieldDefUpsert {
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *FieldDefUpsert) SetName(v string) *FieldDefUpsert {
-	u.Set(fielddef.FieldName, v)
-	return u
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *FieldDefUpsert) UpdateName() *FieldDefUpsert {
-	u.SetExcluded(fielddef.FieldName)
-	return u
-}
-
 // SetRequired sets the "required" field.
 func (u *FieldDefUpsert) SetRequired(v bool) *FieldDefUpsert {
 	u.Set(fielddef.FieldRequired, v)
@@ -433,6 +426,24 @@ func (u *FieldDefUpsert) AddMinLength(v int) *FieldDefUpsert {
 	return u
 }
 
+// SetEnumValues sets the "enumValues" field.
+func (u *FieldDefUpsert) SetEnumValues(v []string) *FieldDefUpsert {
+	u.Set(fielddef.FieldEnumValues, v)
+	return u
+}
+
+// UpdateEnumValues sets the "enumValues" field to the value that was provided on create.
+func (u *FieldDefUpsert) UpdateEnumValues() *FieldDefUpsert {
+	u.SetExcluded(fielddef.FieldEnumValues)
+	return u
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (u *FieldDefUpsert) ClearEnumValues() *FieldDefUpsert {
+	u.SetNull(fielddef.FieldEnumValues)
+	return u
+}
+
 // SetDescription sets the "description" field.
 func (u *FieldDefUpsert) SetDescription(v string) *FieldDefUpsert {
 	u.Set(fielddef.FieldDescription, v)
@@ -464,6 +475,9 @@ func (u *FieldDefUpsertOne) UpdateNewValues() *FieldDefUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.CreateTime(); exists {
 			s.SetIgnore(fielddef.FieldCreateTime)
+		}
+		if _, exists := u.create.mutation.Name(); exists {
+			s.SetIgnore(fielddef.FieldName)
 		}
 		if _, exists := u.create.mutation.GetType(); exists {
 			s.SetIgnore(fielddef.FieldType)
@@ -510,20 +524,6 @@ func (u *FieldDefUpsertOne) SetUpdateTime(v time.Time) *FieldDefUpsertOne {
 func (u *FieldDefUpsertOne) UpdateUpdateTime() *FieldDefUpsertOne {
 	return u.Update(func(s *FieldDefUpsert) {
 		s.UpdateUpdateTime()
-	})
-}
-
-// SetName sets the "name" field.
-func (u *FieldDefUpsertOne) SetName(v string) *FieldDefUpsertOne {
-	return u.Update(func(s *FieldDefUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *FieldDefUpsertOne) UpdateName() *FieldDefUpsertOne {
-	return u.Update(func(s *FieldDefUpsert) {
-		s.UpdateName()
 	})
 }
 
@@ -580,6 +580,27 @@ func (u *FieldDefUpsertOne) AddMinLength(v int) *FieldDefUpsertOne {
 func (u *FieldDefUpsertOne) UpdateMinLength() *FieldDefUpsertOne {
 	return u.Update(func(s *FieldDefUpsert) {
 		s.UpdateMinLength()
+	})
+}
+
+// SetEnumValues sets the "enumValues" field.
+func (u *FieldDefUpsertOne) SetEnumValues(v []string) *FieldDefUpsertOne {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.SetEnumValues(v)
+	})
+}
+
+// UpdateEnumValues sets the "enumValues" field to the value that was provided on create.
+func (u *FieldDefUpsertOne) UpdateEnumValues() *FieldDefUpsertOne {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.UpdateEnumValues()
+	})
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (u *FieldDefUpsertOne) ClearEnumValues() *FieldDefUpsertOne {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.ClearEnumValues()
 	})
 }
 
@@ -783,6 +804,9 @@ func (u *FieldDefUpsertBulk) UpdateNewValues() *FieldDefUpsertBulk {
 			if _, exists := b.mutation.CreateTime(); exists {
 				s.SetIgnore(fielddef.FieldCreateTime)
 			}
+			if _, exists := b.mutation.Name(); exists {
+				s.SetIgnore(fielddef.FieldName)
+			}
 			if _, exists := b.mutation.GetType(); exists {
 				s.SetIgnore(fielddef.FieldType)
 			}
@@ -829,20 +853,6 @@ func (u *FieldDefUpsertBulk) SetUpdateTime(v time.Time) *FieldDefUpsertBulk {
 func (u *FieldDefUpsertBulk) UpdateUpdateTime() *FieldDefUpsertBulk {
 	return u.Update(func(s *FieldDefUpsert) {
 		s.UpdateUpdateTime()
-	})
-}
-
-// SetName sets the "name" field.
-func (u *FieldDefUpsertBulk) SetName(v string) *FieldDefUpsertBulk {
-	return u.Update(func(s *FieldDefUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *FieldDefUpsertBulk) UpdateName() *FieldDefUpsertBulk {
-	return u.Update(func(s *FieldDefUpsert) {
-		s.UpdateName()
 	})
 }
 
@@ -899,6 +909,27 @@ func (u *FieldDefUpsertBulk) AddMinLength(v int) *FieldDefUpsertBulk {
 func (u *FieldDefUpsertBulk) UpdateMinLength() *FieldDefUpsertBulk {
 	return u.Update(func(s *FieldDefUpsert) {
 		s.UpdateMinLength()
+	})
+}
+
+// SetEnumValues sets the "enumValues" field.
+func (u *FieldDefUpsertBulk) SetEnumValues(v []string) *FieldDefUpsertBulk {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.SetEnumValues(v)
+	})
+}
+
+// UpdateEnumValues sets the "enumValues" field to the value that was provided on create.
+func (u *FieldDefUpsertBulk) UpdateEnumValues() *FieldDefUpsertBulk {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.UpdateEnumValues()
+	})
+}
+
+// ClearEnumValues clears the value of the "enumValues" field.
+func (u *FieldDefUpsertBulk) ClearEnumValues() *FieldDefUpsertBulk {
+	return u.Update(func(s *FieldDefUpsert) {
+		s.ClearEnumValues()
 	})
 }
 

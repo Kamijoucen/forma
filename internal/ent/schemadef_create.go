@@ -270,18 +270,6 @@ func (u *SchemaDefUpsert) UpdateUpdateTime() *SchemaDefUpsert {
 	return u
 }
 
-// SetName sets the "name" field.
-func (u *SchemaDefUpsert) SetName(v string) *SchemaDefUpsert {
-	u.Set(schemadef.FieldName, v)
-	return u
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SchemaDefUpsert) UpdateName() *SchemaDefUpsert {
-	u.SetExcluded(schemadef.FieldName)
-	return u
-}
-
 // SetDescription sets the "description" field.
 func (u *SchemaDefUpsert) SetDescription(v string) *SchemaDefUpsert {
 	u.Set(schemadef.FieldDescription, v)
@@ -313,6 +301,9 @@ func (u *SchemaDefUpsertOne) UpdateNewValues() *SchemaDefUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.CreateTime(); exists {
 			s.SetIgnore(schemadef.FieldCreateTime)
+		}
+		if _, exists := u.create.mutation.Name(); exists {
+			s.SetIgnore(schemadef.FieldName)
 		}
 	}))
 	return u
@@ -356,20 +347,6 @@ func (u *SchemaDefUpsertOne) SetUpdateTime(v time.Time) *SchemaDefUpsertOne {
 func (u *SchemaDefUpsertOne) UpdateUpdateTime() *SchemaDefUpsertOne {
 	return u.Update(func(s *SchemaDefUpsert) {
 		s.UpdateUpdateTime()
-	})
-}
-
-// SetName sets the "name" field.
-func (u *SchemaDefUpsertOne) SetName(v string) *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SchemaDefUpsertOne) UpdateName() *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
-		s.UpdateName()
 	})
 }
 
@@ -573,6 +550,9 @@ func (u *SchemaDefUpsertBulk) UpdateNewValues() *SchemaDefUpsertBulk {
 			if _, exists := b.mutation.CreateTime(); exists {
 				s.SetIgnore(schemadef.FieldCreateTime)
 			}
+			if _, exists := b.mutation.Name(); exists {
+				s.SetIgnore(schemadef.FieldName)
+			}
 		}
 	}))
 	return u
@@ -616,20 +596,6 @@ func (u *SchemaDefUpsertBulk) SetUpdateTime(v time.Time) *SchemaDefUpsertBulk {
 func (u *SchemaDefUpsertBulk) UpdateUpdateTime() *SchemaDefUpsertBulk {
 	return u.Update(func(s *SchemaDefUpsert) {
 		s.UpdateUpdateTime()
-	})
-}
-
-// SetName sets the "name" field.
-func (u *SchemaDefUpsertBulk) SetName(v string) *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *SchemaDefUpsertBulk) UpdateName() *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
-		s.UpdateName()
 	})
 }
 
