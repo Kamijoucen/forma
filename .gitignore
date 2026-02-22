@@ -34,3 +34,6 @@ etc/forma-api-dev.yaml
 
 # Ent generated files are tracked, but atlas temp files are not
 *.hcl.bak
+
+# python
+__pycache__/
