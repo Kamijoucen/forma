@@ -4,8 +4,8 @@
 package types
 
 type EntityCreateReq struct {
-	SchemaName string        `json:"schemaName"`
-	Fields     []*FieldValue `json:"fields"`
+	SchemaName string             `json:"schemaName"`
+	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type EntityCreateResp struct {
@@ -42,9 +42,9 @@ type EntityListResp struct {
 }
 
 type EntityUpdateReq struct {
-	SchemaName string        `json:"schemaName"`
-	Id         string        `json:"id"`
-	Fields     []*FieldValue `json:"fields"`
+	SchemaName string             `json:"schemaName"`
+	Id         string             `json:"id"`
+	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type FieldDef struct {
@@ -60,8 +60,13 @@ type FieldDef struct {
 
 type FieldValue struct {
 	Name  string `json:"name"`
-	Type  string `json:"type"`  // 与 FieldDef.Type 对应
-	Value string `json:"value"` // 值的字符串表示，后端根据 type 转换
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+type FieldValueInput struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type SchemaCreateReq struct {

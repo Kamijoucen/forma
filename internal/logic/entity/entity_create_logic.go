@@ -65,7 +65,7 @@ func (l *EntityCreateLogic) EntityCreate(req *types.EntityCreateReq) (resp *type
 		recordID = record.ID
 
 		// 批量创建字段值
-		creates := lo.Map(req.Fields, func(fv *types.FieldValue, _ int) *ent.EntityFieldValueCreate {
+		creates := lo.Map(req.Fields, func(fv *types.FieldValueInput, _ int) *ent.EntityFieldValueCreate {
 			return tx.EntityFieldValue.Create().
 				SetValue(fv.Value).
 				SetEntityRecord(record).

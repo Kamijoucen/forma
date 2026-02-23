@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"entgo.io/ent/schema/mixin"
 )
 
@@ -39,5 +40,13 @@ func (FieldDef) Edges() []ent.Edge {
 func (FieldDef) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		mixin.Time{},
+	}
+}
+
+// Indexes of the FieldDef.
+func (FieldDef) Indexes() []ent.Index {
+	return []ent.Index{
+		// 同一 Schema 下字段名唯一
+		index.Fields("name").Edges("schemaDef").Unique(),
 	}
 }

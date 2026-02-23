@@ -39,9 +39,9 @@ POST /api/entity/create
 {
   "schemaName": "todo",
   "fields": [
-    { "name": "title", "type": "string", "value": "买牛奶" },
-    { "name": "done", "type": "boolean", "value": "false" },
-    { "name": "priority", "type": "enum", "value": "medium" }
+    { "name": "title", "value": "买牛奶" },
+    { "name": "done", "value": "false" },
+    { "name": "priority", "value": "medium" }
   ]
 }
 ```

@@ -10,12 +10,17 @@ import (
 	"forma/internal/types"
 )
 
-// ValidateSchemaFields 校验字段定义列表：非空、类型合法、枚举类型必须有值
+// ValidateSchemaFields 校验字段定义列表：非空、名称唯一、类型合法、枚举类型必须有值
 func ValidateSchemaFields(fields []*types.FieldDef) error {
 	if len(fields) == 0 {
 		return errorx.ErrInvalidParam
 	}
+	nameSet := make(map[string]struct{}, len(fields))
 	for _, f := range fields {
+		if _, exists := nameSet[f.Name]; exists {
+			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段名 %s 重复", f.Name)
+		}
+		nameSet[f.Name] = struct{}{}
 		if err := fielddef.TypeValidator(fielddef.Type(f.Type)); err != nil {
 			return errorx.NewBizError(errorx.CodeInvalidParam, err.Error())
 		}

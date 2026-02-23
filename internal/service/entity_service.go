@@ -15,9 +15,9 @@ import (
 	"github.com/samber/lo"
 )
 
-// ValidateEntityFields 根据 FieldDef 定义校验 FieldValue 列表：类型匹配、必填、长度、枚举值
+// ValidateEntityFields 根据 FieldDef 定义校验 FieldValueInput 列表：必填、长度、枚举值等
 // 校验通过后返回 name → *ent.FieldDef 映射，供调用方关联 FieldDef
-func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldValue) (map[string]*ent.FieldDef, error) {
+func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldValueInput) (map[string]*ent.FieldDef, error) {
 	// 构建 FieldDef 索引 name → *ent.FieldDef
 	defMap := lo.SliceToMap(fieldDefs, func(fd *ent.FieldDef) (string, *ent.FieldDef) {
 		return fd.Name, fd
@@ -30,11 +30,6 @@ func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldV
 		def, ok := defMap[fv.Name]
 		if !ok {
 			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 未在Schema中定义", fv.Name)
-		}
-
-		// 类型一致性校验
-		if fv.Type != string(def.Type) {
-			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 的类型不匹配，期望 %s，实际 %s", fv.Name, string(def.Type), fv.Type)
 		}
 
 		// 值校验
@@ -55,8 +50,8 @@ func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldV
 	return defMap, nil
 }
 
-// validateFieldValue 根据字段类型校验单个 FieldValue
-func validateFieldValue(def *ent.FieldDef, fv *types.FieldValue) error {
+// validateFieldValue 根据字段类型校验单个 FieldValueInput
+func validateFieldValue(def *ent.FieldDef, fv *types.FieldValueInput) error {
 	value := fv.Value
 
 	switch def.Type {

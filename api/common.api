@@ -12,10 +12,16 @@ type FieldDef {
 	Description  string   `json:"description,optional"`
 }
 
-// 实体数据字段值
+// 实体数据字段值（写入请求）
+type FieldValueInput {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// 实体数据字段值（查询响应，含从 FieldDef 读取的 type）
 type FieldValue {
 	Name  string `json:"name"`
-	Type  string `json:"type"` // 与 FieldDef.Type 对应
-	Value string `json:"value"` // 值的字符串表示，后端根据 type 转换
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 

@@ -85,7 +85,7 @@ func (l *EntityUpdateLogic) EntityUpdate(req *types.EntityUpdateReq) error {
 		}
 
 		// 批量创建新的字段值
-		creates := lo.Map(req.Fields, func(fv *types.FieldValue, _ int) *ent.EntityFieldValueCreate {
+		creates := lo.Map(req.Fields, func(fv *types.FieldValueInput, _ int) *ent.EntityFieldValueCreate {
 			return tx.EntityFieldValue.Create().
 				SetValue(fv.Value).
 				SetEntityRecord(record).

@@ -3,8 +3,8 @@ syntax = "v1"
 import "common.api"
 
 type EntityCreateReq {
-	SchemaName string        `json:"schemaName"`
-	Fields     []*FieldValue `json:"fields"`
+	SchemaName string             `json:"schemaName"`
+	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type EntityCreateResp {
@@ -12,9 +12,9 @@ type EntityCreateResp {
 }
 
 type EntityUpdateReq {
-	SchemaName string        `json:"schemaName"`
-	Id         string        `json:"id"`
-	Fields     []*FieldValue `json:"fields"`
+	SchemaName string             `json:"schemaName"`
+	Id         string             `json:"id"`
+	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type EntityDeleteReq {

@@ -85,6 +85,13 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "fielddef_name_schema_def_field_defs",
+				Unique:  true,
+				Columns: []*schema.Column{FieldDefsColumns[3], FieldDefsColumns[10]},
+			},
+		},
 	}
 	// SchemaDefsColumns holds the columns for the "schema_defs" table.
 	SchemaDefsColumns = []*schema.Column{
