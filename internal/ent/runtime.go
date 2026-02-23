@@ -17,12 +17,8 @@ import (
 func init() {
 	entityfieldvalueFields := schema.EntityFieldValue{}.Fields()
 	_ = entityfieldvalueFields
-	// entityfieldvalueDescName is the schema descriptor for name field.
-	entityfieldvalueDescName := entityfieldvalueFields[0].Descriptor()
-	// entityfieldvalue.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	entityfieldvalue.NameValidator = entityfieldvalueDescName.Validators[0].(func(string) error)
 	// entityfieldvalueDescValue is the schema descriptor for value field.
-	entityfieldvalueDescValue := entityfieldvalueFields[2].Descriptor()
+	entityfieldvalueDescValue := entityfieldvalueFields[0].Descriptor()
 	// entityfieldvalue.DefaultValue holds the default value on creation for the value field.
 	entityfieldvalue.DefaultValue = entityfieldvalueDescValue.Default.(string)
 	entityrecordMixin := schema.EntityRecord{}.Mixin()

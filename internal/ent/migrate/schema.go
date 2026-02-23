@@ -11,10 +11,9 @@ var (
 	// EntityFieldValuesColumns holds the columns for the "entity_field_values" table.
 	EntityFieldValuesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"string", "number", "boolean", "date", "text", "enum", "json", "array"}},
 		{Name: "value", Type: field.TypeString, Size: 2147483647, Default: ""},
 		{Name: "entity_record_field_values", Type: field.TypeInt},
+		{Name: "field_def_field_values", Type: field.TypeInt},
 	}
 	// EntityFieldValuesTable holds the schema information for the "entity_field_values" table.
 	EntityFieldValuesTable = &schema.Table{
@@ -24,8 +23,14 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "entity_field_values_entity_records_fieldValues",
-				Columns:    []*schema.Column{EntityFieldValuesColumns[4]},
+				Columns:    []*schema.Column{EntityFieldValuesColumns[2]},
 				RefColumns: []*schema.Column{EntityRecordsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "entity_field_values_field_defs_fieldValues",
+				Columns:    []*schema.Column{EntityFieldValuesColumns[3]},
+				RefColumns: []*schema.Column{FieldDefsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -104,6 +109,7 @@ var (
 
 func init() {
 	EntityFieldValuesTable.ForeignKeys[0].RefTable = EntityRecordsTable
+	EntityFieldValuesTable.ForeignKeys[1].RefTable = FieldDefsTable
 	EntityRecordsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 	FieldDefsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 }

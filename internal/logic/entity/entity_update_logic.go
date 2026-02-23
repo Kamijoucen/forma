@@ -55,7 +55,8 @@ func (l *EntityUpdateLogic) EntityUpdate(req *types.EntityUpdateReq) error {
 	}
 
 	// 校验字段值
-	if err := service.ValidateEntityFields(sd.Edges.FieldDefs, req.Fields); err != nil {
+	defMap, err := service.ValidateEntityFields(sd.Edges.FieldDefs, req.Fields)
+	if err != nil {
 		return err
 	}
 
@@ -86,10 +87,9 @@ func (l *EntityUpdateLogic) EntityUpdate(req *types.EntityUpdateReq) error {
 		// 批量创建新的字段值
 		creates := lo.Map(req.Fields, func(fv *types.FieldValue, _ int) *ent.EntityFieldValueCreate {
 			return tx.EntityFieldValue.Create().
-				SetName(fv.Name).
-				SetType(entityfieldvalue.Type(fv.Type)).
 				SetValue(fv.Value).
-				SetEntityRecord(record)
+				SetEntityRecord(record).
+				SetFieldDef(defMap[fv.Name])
 		})
 		if _, err := tx.EntityFieldValue.CreateBulk(creates...).Save(l.ctx); err != nil {
 			return err

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
+	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 	"math"
 
@@ -24,6 +25,7 @@ type EntityFieldValueQuery struct {
 	inters           []Interceptor
 	predicates       []predicate.EntityFieldValue
 	withEntityRecord *EntityRecordQuery
+	withFieldDef     *FieldDefQuery
 	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -76,6 +78,28 @@ func (_q *EntityFieldValueQuery) QueryEntityRecord() *EntityRecordQuery {
 			sqlgraph.From(entityfieldvalue.Table, entityfieldvalue.FieldID, selector),
 			sqlgraph.To(entityrecord.Table, entityrecord.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, entityfieldvalue.EntityRecordTable, entityfieldvalue.EntityRecordColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFieldDef chains the current query on the "fieldDef" edge.
+func (_q *EntityFieldValueQuery) QueryFieldDef() *FieldDefQuery {
+	query := (&FieldDefClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(entityfieldvalue.Table, entityfieldvalue.FieldID, selector),
+			sqlgraph.To(fielddef.Table, fielddef.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, entityfieldvalue.FieldDefTable, entityfieldvalue.FieldDefColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +300,7 @@ func (_q *EntityFieldValueQuery) Clone() *EntityFieldValueQuery {
 		inters:           append([]Interceptor{}, _q.inters...),
 		predicates:       append([]predicate.EntityFieldValue{}, _q.predicates...),
 		withEntityRecord: _q.withEntityRecord.Clone(),
+		withFieldDef:     _q.withFieldDef.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -293,18 +318,29 @@ func (_q *EntityFieldValueQuery) WithEntityRecord(opts ...func(*EntityRecordQuer
 	return _q
 }
 
+// WithFieldDef tells the query-builder to eager-load the nodes that are connected to
+// the "fieldDef" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *EntityFieldValueQuery) WithFieldDef(opts ...func(*FieldDefQuery)) *EntityFieldValueQuery {
+	query := (&FieldDefClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withFieldDef = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Value string `json:"value,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.EntityFieldValue.Query().
-//		GroupBy(entityfieldvalue.FieldName).
+//		GroupBy(entityfieldvalue.FieldValue).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *EntityFieldValueQuery) GroupBy(field string, fields ...string) *EntityFieldValueGroupBy {
@@ -322,11 +358,11 @@ func (_q *EntityFieldValueQuery) GroupBy(field string, fields ...string) *Entity
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		Value string `json:"value,omitempty"`
 //	}
 //
 //	client.EntityFieldValue.Query().
-//		Select(entityfieldvalue.FieldName).
+//		Select(entityfieldvalue.FieldValue).
 //		Scan(ctx, &v)
 func (_q *EntityFieldValueQuery) Select(fields ...string) *EntityFieldValueSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -372,11 +408,12 @@ func (_q *EntityFieldValueQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 		nodes       = []*EntityFieldValue{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withEntityRecord != nil,
+			_q.withFieldDef != nil,
 		}
 	)
-	if _q.withEntityRecord != nil {
+	if _q.withEntityRecord != nil || _q.withFieldDef != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -403,6 +440,12 @@ func (_q *EntityFieldValueQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if query := _q.withEntityRecord; query != nil {
 		if err := _q.loadEntityRecord(ctx, query, nodes, nil,
 			func(n *EntityFieldValue, e *EntityRecord) { n.Edges.EntityRecord = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withFieldDef; query != nil {
+		if err := _q.loadFieldDef(ctx, query, nodes, nil,
+			func(n *EntityFieldValue, e *FieldDef) { n.Edges.FieldDef = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -434,6 +477,38 @@ func (_q *EntityFieldValueQuery) loadEntityRecord(ctx context.Context, query *En
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "entity_record_field_values" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *EntityFieldValueQuery) loadFieldDef(ctx context.Context, query *FieldDefQuery, nodes []*EntityFieldValue, init func(*EntityFieldValue), assign func(*EntityFieldValue, *FieldDef)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*EntityFieldValue)
+	for i := range nodes {
+		if nodes[i].field_def_field_values == nil {
+			continue
+		}
+		fk := *nodes[i].field_def_field_values
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(fielddef.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "field_def_field_values" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

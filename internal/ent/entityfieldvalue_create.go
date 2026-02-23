@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
+	"forma/internal/ent/fielddef"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -20,18 +21,6 @@ type EntityFieldValueCreate struct {
 	mutation *EntityFieldValueMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
-}
-
-// SetName sets the "name" field.
-func (_c *EntityFieldValueCreate) SetName(v string) *EntityFieldValueCreate {
-	_c.mutation.SetName(v)
-	return _c
-}
-
-// SetType sets the "type" field.
-func (_c *EntityFieldValueCreate) SetType(v entityfieldvalue.Type) *EntityFieldValueCreate {
-	_c.mutation.SetType(v)
-	return _c
 }
 
 // SetValue sets the "value" field.
@@ -57,6 +46,17 @@ func (_c *EntityFieldValueCreate) SetEntityRecordID(id int) *EntityFieldValueCre
 // SetEntityRecord sets the "entityRecord" edge to the EntityRecord entity.
 func (_c *EntityFieldValueCreate) SetEntityRecord(v *EntityRecord) *EntityFieldValueCreate {
 	return _c.SetEntityRecordID(v.ID)
+}
+
+// SetFieldDefID sets the "fieldDef" edge to the FieldDef entity by ID.
+func (_c *EntityFieldValueCreate) SetFieldDefID(id int) *EntityFieldValueCreate {
+	_c.mutation.SetFieldDefID(id)
+	return _c
+}
+
+// SetFieldDef sets the "fieldDef" edge to the FieldDef entity.
+func (_c *EntityFieldValueCreate) SetFieldDef(v *FieldDef) *EntityFieldValueCreate {
+	return _c.SetFieldDefID(v.ID)
 }
 
 // Mutation returns the EntityFieldValueMutation object of the builder.
@@ -102,27 +102,14 @@ func (_c *EntityFieldValueCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EntityFieldValueCreate) check() error {
-	if _, ok := _c.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "EntityFieldValue.name"`)}
-	}
-	if v, ok := _c.mutation.Name(); ok {
-		if err := entityfieldvalue.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.name": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "EntityFieldValue.type"`)}
-	}
-	if v, ok := _c.mutation.GetType(); ok {
-		if err := entityfieldvalue.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.type": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Value(); !ok {
 		return &ValidationError{Name: "value", err: errors.New(`ent: missing required field "EntityFieldValue.value"`)}
 	}
 	if len(_c.mutation.EntityRecordIDs()) == 0 {
 		return &ValidationError{Name: "entityRecord", err: errors.New(`ent: missing required edge "EntityFieldValue.entityRecord"`)}
+	}
+	if len(_c.mutation.FieldDefIDs()) == 0 {
+		return &ValidationError{Name: "fieldDef", err: errors.New(`ent: missing required edge "EntityFieldValue.fieldDef"`)}
 	}
 	return nil
 }
@@ -151,14 +138,6 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(entityfieldvalue.Table, sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt))
 	)
 	_spec.OnConflict = _c.conflict
-	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(entityfieldvalue.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
-	if value, ok := _c.mutation.GetType(); ok {
-		_spec.SetField(entityfieldvalue.FieldType, field.TypeEnum, value)
-		_node.Type = value
-	}
 	if value, ok := _c.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)
 		_node.Value = value
@@ -180,6 +159,23 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 		_node.entity_record_field_values = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.FieldDefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   entityfieldvalue.FieldDefTable,
+			Columns: []string{entityfieldvalue.FieldDefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.field_def_field_values = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -187,7 +183,7 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 // of the `INSERT` statement. For example:
 //
 //	client.EntityFieldValue.Create().
-//		SetName(v).
+//		SetValue(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -196,7 +192,7 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EntityFieldValueUpsert) {
-//			SetName(v+v).
+//			SetValue(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EntityFieldValueCreate) OnConflict(opts ...sql.ConflictOption) *EntityFieldValueUpsertOne {
@@ -231,30 +227,6 @@ type (
 		*sql.UpdateSet
 	}
 )
-
-// SetName sets the "name" field.
-func (u *EntityFieldValueUpsert) SetName(v string) *EntityFieldValueUpsert {
-	u.Set(entityfieldvalue.FieldName, v)
-	return u
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *EntityFieldValueUpsert) UpdateName() *EntityFieldValueUpsert {
-	u.SetExcluded(entityfieldvalue.FieldName)
-	return u
-}
-
-// SetType sets the "type" field.
-func (u *EntityFieldValueUpsert) SetType(v entityfieldvalue.Type) *EntityFieldValueUpsert {
-	u.Set(entityfieldvalue.FieldType, v)
-	return u
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *EntityFieldValueUpsert) UpdateType() *EntityFieldValueUpsert {
-	u.SetExcluded(entityfieldvalue.FieldType)
-	return u
-}
 
 // SetValue sets the "value" field.
 func (u *EntityFieldValueUpsert) SetValue(v string) *EntityFieldValueUpsert {
@@ -306,34 +278,6 @@ func (u *EntityFieldValueUpsertOne) Update(set func(*EntityFieldValueUpsert)) *E
 		set(&EntityFieldValueUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetName sets the "name" field.
-func (u *EntityFieldValueUpsertOne) SetName(v string) *EntityFieldValueUpsertOne {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *EntityFieldValueUpsertOne) UpdateName() *EntityFieldValueUpsertOne {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.UpdateName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *EntityFieldValueUpsertOne) SetType(v entityfieldvalue.Type) *EntityFieldValueUpsertOne {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *EntityFieldValueUpsertOne) UpdateType() *EntityFieldValueUpsertOne {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.UpdateType()
-	})
 }
 
 // SetValue sets the "value" field.
@@ -485,7 +429,7 @@ func (_c *EntityFieldValueCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EntityFieldValueUpsert) {
-//			SetName(v+v).
+//			SetValue(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EntityFieldValueCreateBulk) OnConflict(opts ...sql.ConflictOption) *EntityFieldValueUpsertBulk {
@@ -552,34 +496,6 @@ func (u *EntityFieldValueUpsertBulk) Update(set func(*EntityFieldValueUpsert)) *
 		set(&EntityFieldValueUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetName sets the "name" field.
-func (u *EntityFieldValueUpsertBulk) SetName(v string) *EntityFieldValueUpsertBulk {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.SetName(v)
-	})
-}
-
-// UpdateName sets the "name" field to the value that was provided on create.
-func (u *EntityFieldValueUpsertBulk) UpdateName() *EntityFieldValueUpsertBulk {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.UpdateName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *EntityFieldValueUpsertBulk) SetType(v entityfieldvalue.Type) *EntityFieldValueUpsertBulk {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *EntityFieldValueUpsertBulk) UpdateType() *EntityFieldValueUpsertBulk {
-	return u.Update(func(s *EntityFieldValueUpsert) {
-		s.UpdateType()
-	})
 }
 
 // SetValue sets the "value" field.

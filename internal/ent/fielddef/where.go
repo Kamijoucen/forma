@@ -453,6 +453,29 @@ func HasSchemaDefWith(preds ...predicate.SchemaDef) predicate.FieldDef {
 	})
 }
 
+// HasFieldValues applies the HasEdge predicate on the "fieldValues" edge.
+func HasFieldValues() predicate.FieldDef {
+	return predicate.FieldDef(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, FieldValuesTable, FieldValuesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFieldValuesWith applies the HasEdge predicate on the "fieldValues" edge with a given conditions (other predicates).
+func HasFieldValuesWith(preds ...predicate.EntityFieldValue) predicate.FieldDef {
+	return predicate.FieldDef(func(s *sql.Selector) {
+		step := newFieldValuesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.FieldDef) predicate.FieldDef {
 	return predicate.FieldDef(sql.AndPredicates(predicates...))

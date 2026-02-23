@@ -16,7 +16,8 @@ import (
 )
 
 // ValidateEntityFields 根据 FieldDef 定义校验 FieldValue 列表：类型匹配、必填、长度、枚举值
-func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldValue) error {
+// 校验通过后返回 name → *ent.FieldDef 映射，供调用方关联 FieldDef
+func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldValue) (map[string]*ent.FieldDef, error) {
 	// 构建 FieldDef 索引 name → *ent.FieldDef
 	defMap := lo.SliceToMap(fieldDefs, func(fd *ent.FieldDef) (string, *ent.FieldDef) {
 		return fd.Name, fd
@@ -28,17 +29,17 @@ func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldV
 	for _, fv := range fieldValues {
 		def, ok := defMap[fv.Name]
 		if !ok {
-			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 未在Schema中定义", fv.Name)
+			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 未在Schema中定义", fv.Name)
 		}
 
 		// 类型一致性校验
 		if fv.Type != string(def.Type) {
-			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 的类型不匹配，期望 %s，实际 %s", fv.Name, string(def.Type), fv.Type)
+			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 的类型不匹配，期望 %s，实际 %s", fv.Name, string(def.Type), fv.Type)
 		}
 
 		// 值校验
 		if err := validateFieldValue(def, fv); err != nil {
-			return err
+			return nil, err
 		}
 
 		provided[fv.Name] = true
@@ -47,11 +48,11 @@ func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldV
 	// 必填字段检查
 	for _, def := range fieldDefs {
 		if def.Required && !provided[def.Name] {
-			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "必填字段 %s 未提供", def.Name)
+			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "必填字段 %s 未提供", def.Name)
 		}
 	}
 
-	return nil
+	return defMap, nil
 }
 
 // validateFieldValue 根据字段类型校验单个 FieldValue
@@ -106,12 +107,12 @@ func validateFieldValue(def *ent.FieldDef, fv *types.FieldValue) error {
 	return nil
 }
 
-// ToEntityDetailResp 将 Ent EntityRecord（需 eager load FieldValues）转为 API 响应
+// ToEntityDetailResp 将 Ent EntityRecord（需 eager load FieldValues 及其 FieldDef 边）转为 API 响应
 func ToEntityDetailResp(record *ent.EntityRecord, schemaName string) *types.EntityDetailResp {
 	fields := lo.Map(record.Edges.FieldValues, func(fv *ent.EntityFieldValue, _ int) *types.FieldValue {
 		return &types.FieldValue{
-			Name:  fv.Name,
-			Type:  string(fv.Type),
+			Name:  fv.Edges.FieldDef.Name,
+			Type:  string(fv.Edges.FieldDef.Type),
 			Value: fv.Value,
 		}
 	})

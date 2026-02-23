@@ -54,99 +54,9 @@ func IDLTE(id int) predicate.EntityFieldValue {
 	return predicate.EntityFieldValue(sql.FieldLTE(FieldID, id))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldEQ(FieldName, v))
-}
-
 // Value applies equality check predicate on the "value" field. It's identical to ValueEQ.
 func Value(v string) predicate.EntityFieldValue {
 	return predicate.EntityFieldValue(sql.FieldEQ(FieldValue, v))
-}
-
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldEQ(FieldName, v))
-}
-
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldNEQ(FieldName, v))
-}
-
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldIn(FieldName, vs...))
-}
-
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldNotIn(FieldName, vs...))
-}
-
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldGT(FieldName, v))
-}
-
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldGTE(FieldName, v))
-}
-
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldLT(FieldName, v))
-}
-
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldLTE(FieldName, v))
-}
-
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldContains(FieldName, v))
-}
-
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldHasPrefix(FieldName, v))
-}
-
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldHasSuffix(FieldName, v))
-}
-
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldEqualFold(FieldName, v))
-}
-
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldContainsFold(FieldName, v))
-}
-
-// TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v Type) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldEQ(FieldType, v))
-}
-
-// TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v Type) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldNEQ(FieldType, v))
-}
-
-// TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...Type) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldIn(FieldType, vs...))
-}
-
-// TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...Type) predicate.EntityFieldValue {
-	return predicate.EntityFieldValue(sql.FieldNotIn(FieldType, vs...))
 }
 
 // ValueEQ applies the EQ predicate on the "value" field.
@@ -229,6 +139,29 @@ func HasEntityRecord() predicate.EntityFieldValue {
 func HasEntityRecordWith(preds ...predicate.EntityRecord) predicate.EntityFieldValue {
 	return predicate.EntityFieldValue(func(s *sql.Selector) {
 		step := newEntityRecordStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasFieldDef applies the HasEdge predicate on the "fieldDef" edge.
+func HasFieldDef() predicate.EntityFieldValue {
+	return predicate.EntityFieldValue(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, FieldDefTable, FieldDefColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFieldDefWith applies the HasEdge predicate on the "fieldDef" edge with a given conditions (other predicates).
+func HasFieldDefWith(preds ...predicate.FieldDef) predicate.EntityFieldValue {
+	return predicate.EntityFieldValue(func(s *sql.Selector) {
+		step := newFieldDefStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

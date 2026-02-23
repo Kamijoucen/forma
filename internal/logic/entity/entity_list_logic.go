@@ -44,7 +44,9 @@ func (l *EntityListLogic) EntityList(req *types.EntityListReq) (resp *types.Enti
 
 	// 分页查询
 	records, err := query.
-		WithFieldValues().
+		WithFieldValues(func(q *ent.EntityFieldValueQuery) {
+			q.WithFieldDef()
+		}).
 		Offset((req.Page - 1) * req.PageSize).
 		Limit(req.PageSize).
 		Order(entityrecord.ByID()).

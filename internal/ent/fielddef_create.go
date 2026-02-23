@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
 	"time"
@@ -142,6 +143,21 @@ func (_c *FieldDefCreate) SetNillableSchemaDefID(id *int) *FieldDefCreate {
 // SetSchemaDef sets the "schemaDef" edge to the SchemaDef entity.
 func (_c *FieldDefCreate) SetSchemaDef(v *SchemaDef) *FieldDefCreate {
 	return _c.SetSchemaDefID(v.ID)
+}
+
+// AddFieldValueIDs adds the "fieldValues" edge to the EntityFieldValue entity by IDs.
+func (_c *FieldDefCreate) AddFieldValueIDs(ids ...int) *FieldDefCreate {
+	_c.mutation.AddFieldValueIDs(ids...)
+	return _c
+}
+
+// AddFieldValues adds the "fieldValues" edges to the EntityFieldValue entity.
+func (_c *FieldDefCreate) AddFieldValues(v ...*EntityFieldValue) *FieldDefCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddFieldValueIDs(ids...)
 }
 
 // Mutation returns the FieldDefMutation object of the builder.
@@ -312,6 +328,22 @@ func (_c *FieldDefCreate) createSpec() (*FieldDef, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.schema_def_field_defs = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.FieldValuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

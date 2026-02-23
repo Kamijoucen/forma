@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
+	"forma/internal/ent/fielddef"
 	"strings"
 
 	"entgo.io/ent"
@@ -17,16 +18,13 @@ type EntityFieldValue struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// 字段名
-	Name string `json:"name,omitempty"`
-	// 字段类型
-	Type entityfieldvalue.Type `json:"type,omitempty"`
 	// 字段值的字符串表示
 	Value string `json:"value,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EntityFieldValueQuery when eager-loading is set.
 	Edges                      EntityFieldValueEdges `json:"edges"`
 	entity_record_field_values *int
+	field_def_field_values     *int
 	selectValues               sql.SelectValues
 }
 
@@ -34,9 +32,11 @@ type EntityFieldValue struct {
 type EntityFieldValueEdges struct {
 	// 所属实体记录
 	EntityRecord *EntityRecord `json:"entityRecord,omitempty"`
+	// 关联字段定义
+	FieldDef *FieldDef `json:"fieldDef,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // EntityRecordOrErr returns the EntityRecord value or an error if the edge
@@ -50,6 +50,17 @@ func (e EntityFieldValueEdges) EntityRecordOrErr() (*EntityRecord, error) {
 	return nil, &NotLoadedError{edge: "entityRecord"}
 }
 
+// FieldDefOrErr returns the FieldDef value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EntityFieldValueEdges) FieldDefOrErr() (*FieldDef, error) {
+	if e.FieldDef != nil {
+		return e.FieldDef, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: fielddef.Label}
+	}
+	return nil, &NotLoadedError{edge: "fieldDef"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*EntityFieldValue) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -57,9 +68,11 @@ func (*EntityFieldValue) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case entityfieldvalue.FieldID:
 			values[i] = new(sql.NullInt64)
-		case entityfieldvalue.FieldName, entityfieldvalue.FieldType, entityfieldvalue.FieldValue:
+		case entityfieldvalue.FieldValue:
 			values[i] = new(sql.NullString)
 		case entityfieldvalue.ForeignKeys[0]: // entity_record_field_values
+			values[i] = new(sql.NullInt64)
+		case entityfieldvalue.ForeignKeys[1]: // field_def_field_values
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -82,18 +95,6 @@ func (_m *EntityFieldValue) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case entityfieldvalue.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				_m.Name = value.String
-			}
-		case entityfieldvalue.FieldType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field type", values[i])
-			} else if value.Valid {
-				_m.Type = entityfieldvalue.Type(value.String)
-			}
 		case entityfieldvalue.FieldValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field value", values[i])
@@ -106,6 +107,13 @@ func (_m *EntityFieldValue) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.entity_record_field_values = new(int)
 				*_m.entity_record_field_values = int(value.Int64)
+			}
+		case entityfieldvalue.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field field_def_field_values", value)
+			} else if value.Valid {
+				_m.field_def_field_values = new(int)
+				*_m.field_def_field_values = int(value.Int64)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -123,6 +131,11 @@ func (_m *EntityFieldValue) GetValue(name string) (ent.Value, error) {
 // QueryEntityRecord queries the "entityRecord" edge of the EntityFieldValue entity.
 func (_m *EntityFieldValue) QueryEntityRecord() *EntityRecordQuery {
 	return NewEntityFieldValueClient(_m.config).QueryEntityRecord(_m)
+}
+
+// QueryFieldDef queries the "fieldDef" edge of the EntityFieldValue entity.
+func (_m *EntityFieldValue) QueryFieldDef() *FieldDefQuery {
+	return NewEntityFieldValueClient(_m.config).QueryFieldDef(_m)
 }
 
 // Update returns a builder for updating this EntityFieldValue.
@@ -148,12 +161,6 @@ func (_m *EntityFieldValue) String() string {
 	var builder strings.Builder
 	builder.WriteString("EntityFieldValue(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("name=")
-	builder.WriteString(_m.Name)
-	builder.WriteString(", ")
-	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Type))
-	builder.WriteString(", ")
 	builder.WriteString("value=")
 	builder.WriteString(_m.Value)
 	builder.WriteByte(')')

@@ -352,6 +352,22 @@ func (c *EntityFieldValueClient) QueryEntityRecord(_m *EntityFieldValue) *Entity
 	return query
 }
 
+// QueryFieldDef queries the fieldDef edge of a EntityFieldValue.
+func (c *EntityFieldValueClient) QueryFieldDef(_m *EntityFieldValue) *FieldDefQuery {
+	query := (&FieldDefClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(entityfieldvalue.Table, entityfieldvalue.FieldID, id),
+			sqlgraph.To(fielddef.Table, fielddef.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, entityfieldvalue.FieldDefTable, entityfieldvalue.FieldDefColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *EntityFieldValueClient) Hooks() []Hook {
 	return c.hooks.EntityFieldValue
@@ -659,6 +675,22 @@ func (c *FieldDefClient) QuerySchemaDef(_m *FieldDef) *SchemaDefQuery {
 			sqlgraph.From(fielddef.Table, fielddef.FieldID, id),
 			sqlgraph.To(schemadef.Table, schemadef.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, fielddef.SchemaDefTable, fielddef.SchemaDefColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFieldValues queries the fieldValues edge of a FieldDef.
+func (c *FieldDefClient) QueryFieldValues(_m *FieldDef) *EntityFieldValueQuery {
+	query := (&EntityFieldValueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fielddef.Table, fielddef.FieldID, id),
+			sqlgraph.To(entityfieldvalue.Table, entityfieldvalue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, fielddef.FieldValuesTable, fielddef.FieldValuesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

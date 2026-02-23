@@ -44,7 +44,9 @@ func (l *EntityDetailLogic) EntityDetail(req *types.EntityDetailReq) (resp *type
 			entityrecord.IDEQ(id),
 			entityrecord.HasSchemaDefWith(schemadef.NameEQ(req.SchemaName)),
 		).
-		WithFieldValues().
+		WithFieldValues(func(q *ent.EntityFieldValueQuery) {
+			q.WithFieldDef()
+		}).
 		Only(l.ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {

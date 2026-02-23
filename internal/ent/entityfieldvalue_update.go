@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
+	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -25,34 +26,6 @@ type EntityFieldValueUpdate struct {
 // Where appends a list predicates to the EntityFieldValueUpdate builder.
 func (_u *EntityFieldValueUpdate) Where(ps ...predicate.EntityFieldValue) *EntityFieldValueUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetName sets the "name" field.
-func (_u *EntityFieldValueUpdate) SetName(v string) *EntityFieldValueUpdate {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *EntityFieldValueUpdate) SetNillableName(v *string) *EntityFieldValueUpdate {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetType sets the "type" field.
-func (_u *EntityFieldValueUpdate) SetType(v entityfieldvalue.Type) *EntityFieldValueUpdate {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *EntityFieldValueUpdate) SetNillableType(v *entityfieldvalue.Type) *EntityFieldValueUpdate {
-	if v != nil {
-		_u.SetType(*v)
-	}
 	return _u
 }
 
@@ -81,6 +54,17 @@ func (_u *EntityFieldValueUpdate) SetEntityRecord(v *EntityRecord) *EntityFieldV
 	return _u.SetEntityRecordID(v.ID)
 }
 
+// SetFieldDefID sets the "fieldDef" edge to the FieldDef entity by ID.
+func (_u *EntityFieldValueUpdate) SetFieldDefID(id int) *EntityFieldValueUpdate {
+	_u.mutation.SetFieldDefID(id)
+	return _u
+}
+
+// SetFieldDef sets the "fieldDef" edge to the FieldDef entity.
+func (_u *EntityFieldValueUpdate) SetFieldDef(v *FieldDef) *EntityFieldValueUpdate {
+	return _u.SetFieldDefID(v.ID)
+}
+
 // Mutation returns the EntityFieldValueMutation object of the builder.
 func (_u *EntityFieldValueUpdate) Mutation() *EntityFieldValueMutation {
 	return _u.mutation
@@ -89,6 +73,12 @@ func (_u *EntityFieldValueUpdate) Mutation() *EntityFieldValueMutation {
 // ClearEntityRecord clears the "entityRecord" edge to the EntityRecord entity.
 func (_u *EntityFieldValueUpdate) ClearEntityRecord() *EntityFieldValueUpdate {
 	_u.mutation.ClearEntityRecord()
+	return _u
+}
+
+// ClearFieldDef clears the "fieldDef" edge to the FieldDef entity.
+func (_u *EntityFieldValueUpdate) ClearFieldDef() *EntityFieldValueUpdate {
+	_u.mutation.ClearFieldDef()
 	return _u
 }
 
@@ -121,18 +111,11 @@ func (_u *EntityFieldValueUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *EntityFieldValueUpdate) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := entityfieldvalue.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.name": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := entityfieldvalue.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.type": %w`, err)}
-		}
-	}
 	if _u.mutation.EntityRecordCleared() && len(_u.mutation.EntityRecordIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "EntityFieldValue.entityRecord"`)
+	}
+	if _u.mutation.FieldDefCleared() && len(_u.mutation.FieldDefIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "EntityFieldValue.fieldDef"`)
 	}
 	return nil
 }
@@ -148,12 +131,6 @@ func (_u *EntityFieldValueUpdate) sqlSave(ctx context.Context) (_node int, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(entityfieldvalue.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(entityfieldvalue.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)
@@ -187,6 +164,35 @@ func (_u *EntityFieldValueUpdate) sqlSave(ctx context.Context) (_node int, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.FieldDefCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   entityfieldvalue.FieldDefTable,
+			Columns: []string{entityfieldvalue.FieldDefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FieldDefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   entityfieldvalue.FieldDefTable,
+			Columns: []string{entityfieldvalue.FieldDefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{entityfieldvalue.Label}
@@ -205,34 +211,6 @@ type EntityFieldValueUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *EntityFieldValueMutation
-}
-
-// SetName sets the "name" field.
-func (_u *EntityFieldValueUpdateOne) SetName(v string) *EntityFieldValueUpdateOne {
-	_u.mutation.SetName(v)
-	return _u
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (_u *EntityFieldValueUpdateOne) SetNillableName(v *string) *EntityFieldValueUpdateOne {
-	if v != nil {
-		_u.SetName(*v)
-	}
-	return _u
-}
-
-// SetType sets the "type" field.
-func (_u *EntityFieldValueUpdateOne) SetType(v entityfieldvalue.Type) *EntityFieldValueUpdateOne {
-	_u.mutation.SetType(v)
-	return _u
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (_u *EntityFieldValueUpdateOne) SetNillableType(v *entityfieldvalue.Type) *EntityFieldValueUpdateOne {
-	if v != nil {
-		_u.SetType(*v)
-	}
-	return _u
 }
 
 // SetValue sets the "value" field.
@@ -260,6 +238,17 @@ func (_u *EntityFieldValueUpdateOne) SetEntityRecord(v *EntityRecord) *EntityFie
 	return _u.SetEntityRecordID(v.ID)
 }
 
+// SetFieldDefID sets the "fieldDef" edge to the FieldDef entity by ID.
+func (_u *EntityFieldValueUpdateOne) SetFieldDefID(id int) *EntityFieldValueUpdateOne {
+	_u.mutation.SetFieldDefID(id)
+	return _u
+}
+
+// SetFieldDef sets the "fieldDef" edge to the FieldDef entity.
+func (_u *EntityFieldValueUpdateOne) SetFieldDef(v *FieldDef) *EntityFieldValueUpdateOne {
+	return _u.SetFieldDefID(v.ID)
+}
+
 // Mutation returns the EntityFieldValueMutation object of the builder.
 func (_u *EntityFieldValueUpdateOne) Mutation() *EntityFieldValueMutation {
 	return _u.mutation
@@ -268,6 +257,12 @@ func (_u *EntityFieldValueUpdateOne) Mutation() *EntityFieldValueMutation {
 // ClearEntityRecord clears the "entityRecord" edge to the EntityRecord entity.
 func (_u *EntityFieldValueUpdateOne) ClearEntityRecord() *EntityFieldValueUpdateOne {
 	_u.mutation.ClearEntityRecord()
+	return _u
+}
+
+// ClearFieldDef clears the "fieldDef" edge to the FieldDef entity.
+func (_u *EntityFieldValueUpdateOne) ClearFieldDef() *EntityFieldValueUpdateOne {
+	_u.mutation.ClearFieldDef()
 	return _u
 }
 
@@ -313,18 +308,11 @@ func (_u *EntityFieldValueUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *EntityFieldValueUpdateOne) check() error {
-	if v, ok := _u.mutation.Name(); ok {
-		if err := entityfieldvalue.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.name": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.GetType(); ok {
-		if err := entityfieldvalue.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "EntityFieldValue.type": %w`, err)}
-		}
-	}
 	if _u.mutation.EntityRecordCleared() && len(_u.mutation.EntityRecordIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "EntityFieldValue.entityRecord"`)
+	}
+	if _u.mutation.FieldDefCleared() && len(_u.mutation.FieldDefIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "EntityFieldValue.fieldDef"`)
 	}
 	return nil
 }
@@ -358,12 +346,6 @@ func (_u *EntityFieldValueUpdateOne) sqlSave(ctx context.Context) (_node *Entity
 			}
 		}
 	}
-	if value, ok := _u.mutation.Name(); ok {
-		_spec.SetField(entityfieldvalue.FieldName, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.GetType(); ok {
-		_spec.SetField(entityfieldvalue.FieldType, field.TypeEnum, value)
-	}
 	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)
 	}
@@ -389,6 +371,35 @@ func (_u *EntityFieldValueUpdateOne) sqlSave(ctx context.Context) (_node *Entity
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.FieldDefCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   entityfieldvalue.FieldDefTable,
+			Columns: []string{entityfieldvalue.FieldDefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FieldDefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   entityfieldvalue.FieldDefTable,
+			Columns: []string{entityfieldvalue.FieldDefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

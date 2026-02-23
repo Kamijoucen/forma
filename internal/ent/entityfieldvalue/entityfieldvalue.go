@@ -3,8 +3,6 @@
 package entityfieldvalue
 
 import (
-	"fmt"
-
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -14,14 +12,12 @@ const (
 	Label = "entity_field_value"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
 	// FieldValue holds the string denoting the value field in the database.
 	FieldValue = "value"
 	// EdgeEntityRecord holds the string denoting the entityrecord edge name in mutations.
 	EdgeEntityRecord = "entityRecord"
+	// EdgeFieldDef holds the string denoting the fielddef edge name in mutations.
+	EdgeFieldDef = "fieldDef"
 	// Table holds the table name of the entityfieldvalue in the database.
 	Table = "entity_field_values"
 	// EntityRecordTable is the table that holds the entityRecord relation/edge.
@@ -31,13 +27,18 @@ const (
 	EntityRecordInverseTable = "entity_records"
 	// EntityRecordColumn is the table column denoting the entityRecord relation/edge.
 	EntityRecordColumn = "entity_record_field_values"
+	// FieldDefTable is the table that holds the fieldDef relation/edge.
+	FieldDefTable = "entity_field_values"
+	// FieldDefInverseTable is the table name for the FieldDef entity.
+	// It exists in this package in order to avoid circular dependency with the "fielddef" package.
+	FieldDefInverseTable = "field_defs"
+	// FieldDefColumn is the table column denoting the fieldDef relation/edge.
+	FieldDefColumn = "field_def_field_values"
 )
 
 // Columns holds all SQL columns for entityfieldvalue fields.
 var Columns = []string{
 	FieldID,
-	FieldName,
-	FieldType,
 	FieldValue,
 }
 
@@ -45,6 +46,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"entity_record_field_values",
+	"field_def_field_values",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -63,40 +65,9 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
 	// DefaultValue holds the default value on creation for the "value" field.
 	DefaultValue string
 )
-
-// Type defines the type for the "type" enum field.
-type Type string
-
-// Type values.
-const (
-	TypeString  Type = "string"
-	TypeNumber  Type = "number"
-	TypeBoolean Type = "boolean"
-	TypeDate    Type = "date"
-	TypeText    Type = "text"
-	TypeEnum    Type = "enum"
-	TypeJSON    Type = "json"
-	TypeArray   Type = "array"
-)
-
-func (_type Type) String() string {
-	return string(_type)
-}
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type Type) error {
-	switch _type {
-	case TypeString, TypeNumber, TypeBoolean, TypeDate, TypeText, TypeEnum, TypeJSON, TypeArray:
-		return nil
-	default:
-		return fmt.Errorf("entityfieldvalue: invalid enum value for type field: %q", _type)
-	}
-}
 
 // OrderOption defines the ordering options for the EntityFieldValue queries.
 type OrderOption func(*sql.Selector)
@@ -104,16 +75,6 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
-}
-
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
 // ByValue orders the results by the value field.
@@ -127,10 +88,24 @@ func ByEntityRecordField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newEntityRecordStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByFieldDefField orders the results by fieldDef field.
+func ByFieldDefField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFieldDefStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newEntityRecordStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EntityRecordInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, EntityRecordTable, EntityRecordColumn),
+	)
+}
+func newFieldDefStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(FieldDefInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, FieldDefTable, FieldDefColumn),
 	)
 }

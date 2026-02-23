@@ -31,6 +31,7 @@ func (FieldDef) Fields() []ent.Field {
 func (FieldDef) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("schemaDef", SchemaDef.Type).Ref("fieldDefs").Unique().Comment("所属Schema"),
+		edge.To("fieldValues", EntityFieldValue.Type).Comment("关联的字段值"),
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
 	"forma/internal/ent/schemadef"
@@ -149,6 +150,21 @@ func (_u *FieldDefUpdate) SetSchemaDef(v *SchemaDef) *FieldDefUpdate {
 	return _u.SetSchemaDefID(v.ID)
 }
 
+// AddFieldValueIDs adds the "fieldValues" edge to the EntityFieldValue entity by IDs.
+func (_u *FieldDefUpdate) AddFieldValueIDs(ids ...int) *FieldDefUpdate {
+	_u.mutation.AddFieldValueIDs(ids...)
+	return _u
+}
+
+// AddFieldValues adds the "fieldValues" edges to the EntityFieldValue entity.
+func (_u *FieldDefUpdate) AddFieldValues(v ...*EntityFieldValue) *FieldDefUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddFieldValueIDs(ids...)
+}
+
 // Mutation returns the FieldDefMutation object of the builder.
 func (_u *FieldDefUpdate) Mutation() *FieldDefMutation {
 	return _u.mutation
@@ -158,6 +174,27 @@ func (_u *FieldDefUpdate) Mutation() *FieldDefMutation {
 func (_u *FieldDefUpdate) ClearSchemaDef() *FieldDefUpdate {
 	_u.mutation.ClearSchemaDef()
 	return _u
+}
+
+// ClearFieldValues clears all "fieldValues" edges to the EntityFieldValue entity.
+func (_u *FieldDefUpdate) ClearFieldValues() *FieldDefUpdate {
+	_u.mutation.ClearFieldValues()
+	return _u
+}
+
+// RemoveFieldValueIDs removes the "fieldValues" edge to EntityFieldValue entities by IDs.
+func (_u *FieldDefUpdate) RemoveFieldValueIDs(ids ...int) *FieldDefUpdate {
+	_u.mutation.RemoveFieldValueIDs(ids...)
+	return _u
+}
+
+// RemoveFieldValues removes "fieldValues" edges to EntityFieldValue entities.
+func (_u *FieldDefUpdate) RemoveFieldValues(v ...*EntityFieldValue) *FieldDefUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveFieldValueIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -262,6 +299,51 @@ func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.FieldValuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedFieldValuesIDs(); len(nodes) > 0 && !_u.mutation.FieldValuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FieldValuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -408,6 +490,21 @@ func (_u *FieldDefUpdateOne) SetSchemaDef(v *SchemaDef) *FieldDefUpdateOne {
 	return _u.SetSchemaDefID(v.ID)
 }
 
+// AddFieldValueIDs adds the "fieldValues" edge to the EntityFieldValue entity by IDs.
+func (_u *FieldDefUpdateOne) AddFieldValueIDs(ids ...int) *FieldDefUpdateOne {
+	_u.mutation.AddFieldValueIDs(ids...)
+	return _u
+}
+
+// AddFieldValues adds the "fieldValues" edges to the EntityFieldValue entity.
+func (_u *FieldDefUpdateOne) AddFieldValues(v ...*EntityFieldValue) *FieldDefUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddFieldValueIDs(ids...)
+}
+
 // Mutation returns the FieldDefMutation object of the builder.
 func (_u *FieldDefUpdateOne) Mutation() *FieldDefMutation {
 	return _u.mutation
@@ -417,6 +514,27 @@ func (_u *FieldDefUpdateOne) Mutation() *FieldDefMutation {
 func (_u *FieldDefUpdateOne) ClearSchemaDef() *FieldDefUpdateOne {
 	_u.mutation.ClearSchemaDef()
 	return _u
+}
+
+// ClearFieldValues clears all "fieldValues" edges to the EntityFieldValue entity.
+func (_u *FieldDefUpdateOne) ClearFieldValues() *FieldDefUpdateOne {
+	_u.mutation.ClearFieldValues()
+	return _u
+}
+
+// RemoveFieldValueIDs removes the "fieldValues" edge to EntityFieldValue entities by IDs.
+func (_u *FieldDefUpdateOne) RemoveFieldValueIDs(ids ...int) *FieldDefUpdateOne {
+	_u.mutation.RemoveFieldValueIDs(ids...)
+	return _u
+}
+
+// RemoveFieldValues removes "fieldValues" edges to EntityFieldValue entities.
+func (_u *FieldDefUpdateOne) RemoveFieldValues(v ...*EntityFieldValue) *FieldDefUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveFieldValueIDs(ids...)
 }
 
 // Where appends a list predicates to the FieldDefUpdate builder.
@@ -551,6 +669,51 @@ func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.FieldValuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedFieldValuesIDs(); len(nodes) > 0 && !_u.mutation.FieldValuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FieldValuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fielddef.FieldValuesTable,
+			Columns: []string{fielddef.FieldValuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

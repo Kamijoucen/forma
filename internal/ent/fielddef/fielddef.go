@@ -35,6 +35,8 @@ const (
 	FieldDescription = "description"
 	// EdgeSchemaDef holds the string denoting the schemadef edge name in mutations.
 	EdgeSchemaDef = "schemaDef"
+	// EdgeFieldValues holds the string denoting the fieldvalues edge name in mutations.
+	EdgeFieldValues = "fieldValues"
 	// Table holds the table name of the fielddef in the database.
 	Table = "field_defs"
 	// SchemaDefTable is the table that holds the schemaDef relation/edge.
@@ -44,6 +46,13 @@ const (
 	SchemaDefInverseTable = "schema_defs"
 	// SchemaDefColumn is the table column denoting the schemaDef relation/edge.
 	SchemaDefColumn = "schema_def_field_defs"
+	// FieldValuesTable is the table that holds the fieldValues relation/edge.
+	FieldValuesTable = "entity_field_values"
+	// FieldValuesInverseTable is the table name for the EntityFieldValue entity.
+	// It exists in this package in order to avoid circular dependency with the "entityfieldvalue" package.
+	FieldValuesInverseTable = "entity_field_values"
+	// FieldValuesColumn is the table column denoting the fieldValues relation/edge.
+	FieldValuesColumn = "field_def_field_values"
 )
 
 // Columns holds all SQL columns for fielddef fields.
@@ -181,10 +190,31 @@ func BySchemaDefField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSchemaDefStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByFieldValuesCount orders the results by fieldValues count.
+func ByFieldValuesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newFieldValuesStep(), opts...)
+	}
+}
+
+// ByFieldValues orders the results by fieldValues terms.
+func ByFieldValues(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFieldValuesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSchemaDefStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SchemaDefInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, SchemaDefTable, SchemaDefColumn),
+	)
+}
+func newFieldValuesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(FieldValuesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, FieldValuesTable, FieldValuesColumn),
 	)
 }

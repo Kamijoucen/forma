@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"forma/internal/ent"
-	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
 	"forma/internal/service"
@@ -49,7 +48,8 @@ func (l *EntityCreateLogic) EntityCreate(req *types.EntityCreateReq) (resp *type
 	}
 
 	// 校验字段值
-	if err := service.ValidateEntityFields(sd.Edges.FieldDefs, req.Fields); err != nil {
+	defMap, err := service.ValidateEntityFields(sd.Edges.FieldDefs, req.Fields)
+	if err != nil {
 		return nil, err
 	}
 
@@ -67,10 +67,9 @@ func (l *EntityCreateLogic) EntityCreate(req *types.EntityCreateReq) (resp *type
 		// 批量创建字段值
 		creates := lo.Map(req.Fields, func(fv *types.FieldValue, _ int) *ent.EntityFieldValueCreate {
 			return tx.EntityFieldValue.Create().
-				SetName(fv.Name).
-				SetType(entityfieldvalue.Type(fv.Type)).
 				SetValue(fv.Value).
-				SetEntityRecord(record)
+				SetEntityRecord(record).
+				SetFieldDef(defMap[fv.Name])
 		})
 		if _, err := tx.EntityFieldValue.CreateBulk(creates...).Save(l.ctx); err != nil {
 			return err
