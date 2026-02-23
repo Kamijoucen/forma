@@ -39,6 +39,8 @@ type EntityFieldValueMutation struct {
 	op                  Op
 	typ                 string
 	id                  *int
+	create_time         *time.Time
+	update_time         *time.Time
 	value               *string
 	clearedFields       map[string]struct{}
 	entityRecord        *int
@@ -146,6 +148,78 @@ func (m *EntityFieldValueMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *EntityFieldValueMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *EntityFieldValueMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the EntityFieldValue entity.
+// If the EntityFieldValue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityFieldValueMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *EntityFieldValueMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *EntityFieldValueMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *EntityFieldValueMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the EntityFieldValue entity.
+// If the EntityFieldValue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EntityFieldValueMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *EntityFieldValueMutation) ResetUpdateTime() {
+	m.update_time = nil
 }
 
 // SetValue sets the "value" field.
@@ -296,7 +370,13 @@ func (m *EntityFieldValueMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EntityFieldValueMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
+	if m.create_time != nil {
+		fields = append(fields, entityfieldvalue.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, entityfieldvalue.FieldUpdateTime)
+	}
 	if m.value != nil {
 		fields = append(fields, entityfieldvalue.FieldValue)
 	}
@@ -308,6 +388,10 @@ func (m *EntityFieldValueMutation) Fields() []string {
 // schema.
 func (m *EntityFieldValueMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case entityfieldvalue.FieldCreateTime:
+		return m.CreateTime()
+	case entityfieldvalue.FieldUpdateTime:
+		return m.UpdateTime()
 	case entityfieldvalue.FieldValue:
 		return m.Value()
 	}
@@ -319,6 +403,10 @@ func (m *EntityFieldValueMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *EntityFieldValueMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case entityfieldvalue.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case entityfieldvalue.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
 	case entityfieldvalue.FieldValue:
 		return m.OldValue(ctx)
 	}
@@ -330,6 +418,20 @@ func (m *EntityFieldValueMutation) OldField(ctx context.Context, name string) (e
 // type.
 func (m *EntityFieldValueMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case entityfieldvalue.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case entityfieldvalue.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
 	case entityfieldvalue.FieldValue:
 		v, ok := value.(string)
 		if !ok {
@@ -386,6 +488,12 @@ func (m *EntityFieldValueMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *EntityFieldValueMutation) ResetField(name string) error {
 	switch name {
+	case entityfieldvalue.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case entityfieldvalue.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
 	case entityfieldvalue.FieldValue:
 		m.ResetValue()
 		return nil

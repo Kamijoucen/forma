@@ -14,6 +14,8 @@ import requests
 
 # ========== 配置 ==========
 BASE_URL = os.getenv("FORMA_BASE_URL", "http://localhost:8888/api")
+TEMP_TOKEN = os.getenv("FORMA_TOKEN", "123")
+HEADERS = {"Authorization": TEMP_TOKEN}
 
 # 测试用的 Schema 字段定义 —— 覆盖 string/number/boolean/date/text/enum 六种类型
 SCHEMA_FIELDS = [
@@ -95,7 +97,7 @@ def gen_schema_name():
 def post(path, body=None):
     """发送 POST 请求，返回解析后的 JSON"""
     url = f"{BASE_URL}{path}"
-    resp = requests.post(url, json=body, timeout=10)
+    resp = requests.post(url, json=body, headers=HEADERS, timeout=10)
     # 打印resp
     print(f"  Response: {resp.text}")
 
@@ -105,7 +107,7 @@ def post(path, body=None):
 def get(path, params=None):
     """发送 GET 请求，返回解析后的 JSON"""
     url = f"{BASE_URL}{path}"
-    resp = requests.get(url, params=params, timeout=10)
+    resp = requests.get(url, params=params, headers=HEADERS, timeout=10)
     return resp.json()
 
 

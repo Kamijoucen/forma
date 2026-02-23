@@ -10,6 +10,7 @@ import (
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -26,6 +27,12 @@ type EntityFieldValueUpdate struct {
 // Where appends a list predicates to the EntityFieldValueUpdate builder.
 func (_u *EntityFieldValueUpdate) Where(ps ...predicate.EntityFieldValue) *EntityFieldValueUpdate {
 	_u.mutation.Where(ps...)
+	return _u
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (_u *EntityFieldValueUpdate) SetUpdateTime(v time.Time) *EntityFieldValueUpdate {
+	_u.mutation.SetUpdateTime(v)
 	return _u
 }
 
@@ -84,6 +91,7 @@ func (_u *EntityFieldValueUpdate) ClearFieldDef() *EntityFieldValueUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *EntityFieldValueUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -109,6 +117,14 @@ func (_u *EntityFieldValueUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_u *EntityFieldValueUpdate) defaults() {
+	if _, ok := _u.mutation.UpdateTime(); !ok {
+		v := entityfieldvalue.UpdateDefaultUpdateTime()
+		_u.mutation.SetUpdateTime(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_u *EntityFieldValueUpdate) check() error {
 	if _u.mutation.EntityRecordCleared() && len(_u.mutation.EntityRecordIDs()) > 0 {
@@ -131,6 +147,9 @@ func (_u *EntityFieldValueUpdate) sqlSave(ctx context.Context) (_node int, err e
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdateTime(); ok {
+		_spec.SetField(entityfieldvalue.FieldUpdateTime, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)
@@ -213,6 +232,12 @@ type EntityFieldValueUpdateOne struct {
 	mutation *EntityFieldValueMutation
 }
 
+// SetUpdateTime sets the "update_time" field.
+func (_u *EntityFieldValueUpdateOne) SetUpdateTime(v time.Time) *EntityFieldValueUpdateOne {
+	_u.mutation.SetUpdateTime(v)
+	return _u
+}
+
 // SetValue sets the "value" field.
 func (_u *EntityFieldValueUpdateOne) SetValue(v string) *EntityFieldValueUpdateOne {
 	_u.mutation.SetValue(v)
@@ -281,6 +306,7 @@ func (_u *EntityFieldValueUpdateOne) Select(field string, fields ...string) *Ent
 
 // Save executes the query and returns the updated EntityFieldValue entity.
 func (_u *EntityFieldValueUpdateOne) Save(ctx context.Context) (*EntityFieldValue, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -303,6 +329,14 @@ func (_u *EntityFieldValueUpdateOne) Exec(ctx context.Context) error {
 func (_u *EntityFieldValueUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (_u *EntityFieldValueUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdateTime(); !ok {
+		v := entityfieldvalue.UpdateDefaultUpdateTime()
+		_u.mutation.SetUpdateTime(v)
 	}
 }
 
@@ -345,6 +379,9 @@ func (_u *EntityFieldValueUpdateOne) sqlSave(ctx context.Context) (_node *Entity
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdateTime(); ok {
+		_spec.SetField(entityfieldvalue.FieldUpdateTime, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)

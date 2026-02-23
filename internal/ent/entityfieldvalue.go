@@ -8,6 +8,7 @@ import (
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -18,6 +19,10 @@ type EntityFieldValue struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// CreateTime holds the value of the "create_time" field.
+	CreateTime time.Time `json:"create_time,omitempty"`
+	// UpdateTime holds the value of the "update_time" field.
+	UpdateTime time.Time `json:"update_time,omitempty"`
 	// 字段值的字符串表示
 	Value string `json:"value,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -70,6 +75,8 @@ func (*EntityFieldValue) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case entityfieldvalue.FieldValue:
 			values[i] = new(sql.NullString)
+		case entityfieldvalue.FieldCreateTime, entityfieldvalue.FieldUpdateTime:
+			values[i] = new(sql.NullTime)
 		case entityfieldvalue.ForeignKeys[0]: // entity_record_field_values
 			values[i] = new(sql.NullInt64)
 		case entityfieldvalue.ForeignKeys[1]: // field_def_field_values
@@ -95,6 +102,18 @@ func (_m *EntityFieldValue) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
+		case entityfieldvalue.FieldCreateTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field create_time", values[i])
+			} else if value.Valid {
+				_m.CreateTime = value.Time
+			}
+		case entityfieldvalue.FieldUpdateTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field update_time", values[i])
+			} else if value.Valid {
+				_m.UpdateTime = value.Time
+			}
 		case entityfieldvalue.FieldValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field value", values[i])
@@ -161,6 +180,12 @@ func (_m *EntityFieldValue) String() string {
 	var builder strings.Builder
 	builder.WriteString("EntityFieldValue(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("create_time=")
+	builder.WriteString(_m.CreateTime.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("update_time=")
+	builder.WriteString(_m.UpdateTime.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("value=")
 	builder.WriteString(_m.Value)
 	builder.WriteByte(')')

@@ -15,8 +15,21 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	entityfieldvalueMixin := schema.EntityFieldValue{}.Mixin()
+	entityfieldvalueMixinFields0 := entityfieldvalueMixin[0].Fields()
+	_ = entityfieldvalueMixinFields0
 	entityfieldvalueFields := schema.EntityFieldValue{}.Fields()
 	_ = entityfieldvalueFields
+	// entityfieldvalueDescCreateTime is the schema descriptor for create_time field.
+	entityfieldvalueDescCreateTime := entityfieldvalueMixinFields0[0].Descriptor()
+	// entityfieldvalue.DefaultCreateTime holds the default value on creation for the create_time field.
+	entityfieldvalue.DefaultCreateTime = entityfieldvalueDescCreateTime.Default.(func() time.Time)
+	// entityfieldvalueDescUpdateTime is the schema descriptor for update_time field.
+	entityfieldvalueDescUpdateTime := entityfieldvalueMixinFields0[1].Descriptor()
+	// entityfieldvalue.DefaultUpdateTime holds the default value on creation for the update_time field.
+	entityfieldvalue.DefaultUpdateTime = entityfieldvalueDescUpdateTime.Default.(func() time.Time)
+	// entityfieldvalue.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	entityfieldvalue.UpdateDefaultUpdateTime = entityfieldvalueDescUpdateTime.UpdateDefault.(func() time.Time)
 	// entityfieldvalueDescValue is the schema descriptor for value field.
 	entityfieldvalueDescValue := entityfieldvalueFields[0].Descriptor()
 	// entityfieldvalue.DefaultValue holds the default value on creation for the value field.

@@ -5,3 +5,5 @@ Port: 8888
 DB:
   Driver: postgres
   DSN: postgres://postgres:postgres@127.0.0.1:5432/mydb?sslmode=disable
+
+TempToken: "123"

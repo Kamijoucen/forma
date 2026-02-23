@@ -11,6 +11,8 @@ var (
 	// EntityFieldValuesColumns holds the columns for the "entity_field_values" table.
 	EntityFieldValuesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
 		{Name: "value", Type: field.TypeString, Size: 2147483647, Default: ""},
 		{Name: "entity_record_field_values", Type: field.TypeInt},
 		{Name: "field_def_field_values", Type: field.TypeInt},
@@ -23,13 +25,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "entity_field_values_entity_records_fieldValues",
-				Columns:    []*schema.Column{EntityFieldValuesColumns[2]},
+				Columns:    []*schema.Column{EntityFieldValuesColumns[4]},
 				RefColumns: []*schema.Column{EntityRecordsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "entity_field_values_field_defs_fieldValues",
-				Columns:    []*schema.Column{EntityFieldValuesColumns[3]},
+				Columns:    []*schema.Column{EntityFieldValuesColumns[5]},
 				RefColumns: []*schema.Column{FieldDefsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

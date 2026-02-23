@@ -335,12 +335,12 @@ func (_q *EntityFieldValueQuery) WithFieldDef(opts ...func(*FieldDefQuery)) *Ent
 // Example:
 //
 //	var v []struct {
-//		Value string `json:"value,omitempty"`
+//		CreateTime time.Time `json:"create_time,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.EntityFieldValue.Query().
-//		GroupBy(entityfieldvalue.FieldValue).
+//		GroupBy(entityfieldvalue.FieldCreateTime).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *EntityFieldValueQuery) GroupBy(field string, fields ...string) *EntityFieldValueGroupBy {
@@ -358,11 +358,11 @@ func (_q *EntityFieldValueQuery) GroupBy(field string, fields ...string) *Entity
 // Example:
 //
 //	var v []struct {
-//		Value string `json:"value,omitempty"`
+//		CreateTime time.Time `json:"create_time,omitempty"`
 //	}
 //
 //	client.EntityFieldValue.Query().
-//		Select(entityfieldvalue.FieldValue).
+//		Select(entityfieldvalue.FieldCreateTime).
 //		Scan(ctx, &v)
 func (_q *EntityFieldValueQuery) Select(fields ...string) *EntityFieldValueSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

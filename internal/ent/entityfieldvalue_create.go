@@ -9,6 +9,7 @@ import (
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -21,6 +22,34 @@ type EntityFieldValueCreate struct {
 	mutation *EntityFieldValueMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
+}
+
+// SetCreateTime sets the "create_time" field.
+func (_c *EntityFieldValueCreate) SetCreateTime(v time.Time) *EntityFieldValueCreate {
+	_c.mutation.SetCreateTime(v)
+	return _c
+}
+
+// SetNillableCreateTime sets the "create_time" field if the given value is not nil.
+func (_c *EntityFieldValueCreate) SetNillableCreateTime(v *time.Time) *EntityFieldValueCreate {
+	if v != nil {
+		_c.SetCreateTime(*v)
+	}
+	return _c
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (_c *EntityFieldValueCreate) SetUpdateTime(v time.Time) *EntityFieldValueCreate {
+	_c.mutation.SetUpdateTime(v)
+	return _c
+}
+
+// SetNillableUpdateTime sets the "update_time" field if the given value is not nil.
+func (_c *EntityFieldValueCreate) SetNillableUpdateTime(v *time.Time) *EntityFieldValueCreate {
+	if v != nil {
+		_c.SetUpdateTime(*v)
+	}
+	return _c
 }
 
 // SetValue sets the "value" field.
@@ -94,6 +123,14 @@ func (_c *EntityFieldValueCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *EntityFieldValueCreate) defaults() {
+	if _, ok := _c.mutation.CreateTime(); !ok {
+		v := entityfieldvalue.DefaultCreateTime()
+		_c.mutation.SetCreateTime(v)
+	}
+	if _, ok := _c.mutation.UpdateTime(); !ok {
+		v := entityfieldvalue.DefaultUpdateTime()
+		_c.mutation.SetUpdateTime(v)
+	}
 	if _, ok := _c.mutation.Value(); !ok {
 		v := entityfieldvalue.DefaultValue
 		_c.mutation.SetValue(v)
@@ -102,6 +139,12 @@ func (_c *EntityFieldValueCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *EntityFieldValueCreate) check() error {
+	if _, ok := _c.mutation.CreateTime(); !ok {
+		return &ValidationError{Name: "create_time", err: errors.New(`ent: missing required field "EntityFieldValue.create_time"`)}
+	}
+	if _, ok := _c.mutation.UpdateTime(); !ok {
+		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "EntityFieldValue.update_time"`)}
+	}
 	if _, ok := _c.mutation.Value(); !ok {
 		return &ValidationError{Name: "value", err: errors.New(`ent: missing required field "EntityFieldValue.value"`)}
 	}
@@ -138,6 +181,14 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 		_spec = sqlgraph.NewCreateSpec(entityfieldvalue.Table, sqlgraph.NewFieldSpec(entityfieldvalue.FieldID, field.TypeInt))
 	)
 	_spec.OnConflict = _c.conflict
+	if value, ok := _c.mutation.CreateTime(); ok {
+		_spec.SetField(entityfieldvalue.FieldCreateTime, field.TypeTime, value)
+		_node.CreateTime = value
+	}
+	if value, ok := _c.mutation.UpdateTime(); ok {
+		_spec.SetField(entityfieldvalue.FieldUpdateTime, field.TypeTime, value)
+		_node.UpdateTime = value
+	}
 	if value, ok := _c.mutation.Value(); ok {
 		_spec.SetField(entityfieldvalue.FieldValue, field.TypeString, value)
 		_node.Value = value
@@ -183,7 +234,7 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 // of the `INSERT` statement. For example:
 //
 //	client.EntityFieldValue.Create().
-//		SetValue(v).
+//		SetCreateTime(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -192,7 +243,7 @@ func (_c *EntityFieldValueCreate) createSpec() (*EntityFieldValue, *sqlgraph.Cre
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EntityFieldValueUpsert) {
-//			SetValue(v+v).
+//			SetCreateTime(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EntityFieldValueCreate) OnConflict(opts ...sql.ConflictOption) *EntityFieldValueUpsertOne {
@@ -228,6 +279,18 @@ type (
 	}
 )
 
+// SetUpdateTime sets the "update_time" field.
+func (u *EntityFieldValueUpsert) SetUpdateTime(v time.Time) *EntityFieldValueUpsert {
+	u.Set(entityfieldvalue.FieldUpdateTime, v)
+	return u
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *EntityFieldValueUpsert) UpdateUpdateTime() *EntityFieldValueUpsert {
+	u.SetExcluded(entityfieldvalue.FieldUpdateTime)
+	return u
+}
+
 // SetValue sets the "value" field.
 func (u *EntityFieldValueUpsert) SetValue(v string) *EntityFieldValueUpsert {
 	u.Set(entityfieldvalue.FieldValue, v)
@@ -250,6 +313,11 @@ func (u *EntityFieldValueUpsert) UpdateValue() *EntityFieldValueUpsert {
 //		Exec(ctx)
 func (u *EntityFieldValueUpsertOne) UpdateNewValues() *EntityFieldValueUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.CreateTime(); exists {
+			s.SetIgnore(entityfieldvalue.FieldCreateTime)
+		}
+	}))
 	return u
 }
 
@@ -278,6 +346,20 @@ func (u *EntityFieldValueUpsertOne) Update(set func(*EntityFieldValueUpsert)) *E
 		set(&EntityFieldValueUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (u *EntityFieldValueUpsertOne) SetUpdateTime(v time.Time) *EntityFieldValueUpsertOne {
+	return u.Update(func(s *EntityFieldValueUpsert) {
+		s.SetUpdateTime(v)
+	})
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *EntityFieldValueUpsertOne) UpdateUpdateTime() *EntityFieldValueUpsertOne {
+	return u.Update(func(s *EntityFieldValueUpsert) {
+		s.UpdateUpdateTime()
+	})
 }
 
 // SetValue sets the "value" field.
@@ -429,7 +511,7 @@ func (_c *EntityFieldValueCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.EntityFieldValueUpsert) {
-//			SetValue(v+v).
+//			SetCreateTime(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *EntityFieldValueCreateBulk) OnConflict(opts ...sql.ConflictOption) *EntityFieldValueUpsertBulk {
@@ -468,6 +550,13 @@ type EntityFieldValueUpsertBulk struct {
 //		Exec(ctx)
 func (u *EntityFieldValueUpsertBulk) UpdateNewValues() *EntityFieldValueUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.CreateTime(); exists {
+				s.SetIgnore(entityfieldvalue.FieldCreateTime)
+			}
+		}
+	}))
 	return u
 }
 
@@ -496,6 +585,20 @@ func (u *EntityFieldValueUpsertBulk) Update(set func(*EntityFieldValueUpsert)) *
 		set(&EntityFieldValueUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (u *EntityFieldValueUpsertBulk) SetUpdateTime(v time.Time) *EntityFieldValueUpsertBulk {
+	return u.Update(func(s *EntityFieldValueUpsert) {
+		s.SetUpdateTime(v)
+	})
+}
+
+// UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
+func (u *EntityFieldValueUpsertBulk) UpdateUpdateTime() *EntityFieldValueUpsertBulk {
+	return u.Update(func(s *EntityFieldValueUpsert) {
+		s.UpdateUpdateTime()
+	})
 }
 
 // SetValue sets the "value" field.
