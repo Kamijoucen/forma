@@ -9,6 +9,7 @@ import (
 	"forma/internal/logic/entity"
 	"forma/internal/svc"
 	"forma/internal/types"
+
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
@@ -25,7 +26,7 @@ func EntityDeleteHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.Ok(w)
+			httpx.OkJsonCtx(r.Context(), w, nil)
 		}
 	}
 }
