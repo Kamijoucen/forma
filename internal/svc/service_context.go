@@ -9,16 +9,19 @@ import (
 	"forma/internal/config"
 	"forma/internal/ent"
 	"forma/internal/ent/migrate"
+	"forma/internal/middleware"
 	"strings"
 
 	"entgo.io/ent/dialect"
 	_ "github.com/lib/pq"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/rest"
 )
 
 type ServiceContext struct {
-	Config config.Config
-	Ent    *ent.Client
+	Config         config.Config
+	Ent            *ent.Client
+	AuthMiddleware rest.Middleware
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -29,8 +32,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	initHandler()
 
 	return &ServiceContext{
-		Config: c,
-		Ent:    d,
+		Config:         c,
+		Ent:            d,
+		AuthMiddleware: middleware.NewAuthMiddleware(c).Handle,
 	}
 }
 

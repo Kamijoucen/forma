@@ -6,8 +6,9 @@ import (
 )
 
 @server (
-	group:  schema
-	prefix: /api
+	group:      schema
+	prefix:     /api
+	middleware: AuthMiddleware
 )
 service forma-api {
 	@handler SchemaCreateHandler
@@ -27,8 +28,9 @@ service forma-api {
 }
 
 @server (
-	group:  entity
-	prefix: /api
+	group:      entity
+	prefix:     /api
+	middleware: AuthMiddleware
 )
 service forma-api {
 	@handler EntityCreateHandler

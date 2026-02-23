@@ -15,64 +15,70 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/entity/create",
-				Handler: entity.EntityCreateHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/entity/delete",
-				Handler: entity.EntityDeleteHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/entity/detail",
-				Handler: entity.EntityDetailHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/entity/list",
-				Handler: entity.EntityListHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/entity/update",
-				Handler: entity.EntityUpdateHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.AuthMiddleware},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/entity/create",
+					Handler: entity.EntityCreateHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/entity/delete",
+					Handler: entity.EntityDeleteHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/entity/detail",
+					Handler: entity.EntityDetailHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/entity/list",
+					Handler: entity.EntityListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/entity/update",
+					Handler: entity.EntityUpdateHandler(serverCtx),
+				},
+			}...,
+		),
 		rest.WithPrefix("/api"),
 	)
 
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/schema/create",
-				Handler: schema.SchemaCreateHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/schema/delete",
-				Handler: schema.SchemaDeleteHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/schema/detail",
-				Handler: schema.SchemaDetailHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/schema/list",
-				Handler: schema.SchemaListHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/schema/update",
-				Handler: schema.SchemaUpdateHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.AuthMiddleware},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/schema/create",
+					Handler: schema.SchemaCreateHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/schema/delete",
+					Handler: schema.SchemaDeleteHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/schema/detail",
+					Handler: schema.SchemaDetailHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/schema/list",
+					Handler: schema.SchemaListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/schema/update",
+					Handler: schema.SchemaUpdateHandler(serverCtx),
+				},
+			}...,
+		),
 		rest.WithPrefix("/api"),
 	)
 }
