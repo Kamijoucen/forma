@@ -25,6 +25,6 @@ ENV TZ Asia/Shanghai
 
 WORKDIR /app
 COPY --from=builder /app/forma /app/forma
-COPY ./etc /app/etc
 
-CMD ["./forma", "-f", "etc/forma-api.yaml"]
+ENTRYPOINT ["./forma"]
+CMD ["-f", "etc/forma-api.yaml"]

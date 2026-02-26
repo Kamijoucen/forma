@@ -53,12 +53,22 @@ App 1──N SchemaDef 1──N FieldDef
 1. 编辑 `forma.api`
 2. 重新运行 goctl（不会覆盖已有 logic 实现）
 3. 更新 logic 层代码
+4. 同步更新 `AI_INTEGRATION_PROMPT.md` 中对应的端点文档
 
 ### 新增数据实体
 1. 运行 `ent new <Name>` 创建 schema
 2. 在 `internal/ent/schema/` 中定义字段和边
 3. 运行 ent generate 生成代码
 4. 在 ServiceContext 中注入 Ent Client
+
+### 同步 AI 接入提示文件
+以下变更发生时，必须同步更新 `AI_INTEGRATION_PROMPT.md`：
+- API 端点新增、修改或删除（`.api` 文件变更）
+- 数据模型变更（`internal/ent/schema/` 变更）
+- 字段类型新增或校验规则变更（`internal/constant/type.go` 变更）
+- 错误码新增或修改（`internal/errorx/code.go` 变更）
+- 认证方式变更
+- 统一响应格式变更
 
 ### 错误处理
 - 业务错误定义在 `internal/errorx/` 包
