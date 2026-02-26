@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
+	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
@@ -33,10 +35,27 @@ func NewSchemaDeleteLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sche
 
 func (l *SchemaDeleteLogic) SchemaDelete(req *types.SchemaDeleteReq) error {
 	return util.WithTx(l.ctx, l.svcCtx.Ent, func(tx *ent.Tx) error {
-		// 查找 Schema
+		// 检查是否有引用的entity
+		exist, err := l.svcCtx.Ent.EntityRecord.Query().
+			Where(entityrecord.HasSchemaDefWith(
+				schemadef.NameEQ(req.Name),
+				schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+			)).
+			Exist(l.ctx)
+		if err != nil {
+			return err
+		}
+		if exist {
+			return errorx.ErrSchemaInUse
+		}
+
+		// 查找 Schema（按 app 过滤）
 		sd, err := tx.SchemaDef.
 			Query().
-			Where(schemadef.NameEQ(req.Name)).
+			Where(
+				schemadef.NameEQ(req.Name),
+				schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+			).
 			Only(l.ctx)
 		if err != nil {
 			if ent.IsNotFound(err) {

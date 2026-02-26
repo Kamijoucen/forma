@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/schemadef"
@@ -41,10 +42,13 @@ func (l *EntityUpdateLogic) EntityUpdate(req *types.EntityUpdateReq) error {
 		return errorx.NewBizError(errorx.CodeInvalidParam, "ID格式不正确")
 	}
 
-	// 查询 Schema 及其字段定义
+	// 查询 Schema 及其字段定义（按 app 过滤）
 	sd, err := l.svcCtx.Ent.SchemaDef.
 		Query().
-		Where(schemadef.NameEQ(req.SchemaName)).
+		Where(
+			schemadef.NameEQ(req.SchemaName),
+			schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+		).
 		WithFieldDefs().
 		Only(l.ctx)
 	if err != nil {

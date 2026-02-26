@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"forma/internal/ent/app"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
@@ -15,6 +16,29 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	appMixin := schema.App{}.Mixin()
+	appMixinFields0 := appMixin[0].Fields()
+	_ = appMixinFields0
+	appFields := schema.App{}.Fields()
+	_ = appFields
+	// appDescCreateTime is the schema descriptor for create_time field.
+	appDescCreateTime := appMixinFields0[0].Descriptor()
+	// app.DefaultCreateTime holds the default value on creation for the create_time field.
+	app.DefaultCreateTime = appDescCreateTime.Default.(func() time.Time)
+	// appDescUpdateTime is the schema descriptor for update_time field.
+	appDescUpdateTime := appMixinFields0[1].Descriptor()
+	// app.DefaultUpdateTime holds the default value on creation for the update_time field.
+	app.DefaultUpdateTime = appDescUpdateTime.Default.(func() time.Time)
+	// app.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	app.UpdateDefaultUpdateTime = appDescUpdateTime.UpdateDefault.(func() time.Time)
+	// appDescCode is the schema descriptor for code field.
+	appDescCode := appFields[0].Descriptor()
+	// app.CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	app.CodeValidator = appDescCode.Validators[0].(func(string) error)
+	// appDescName is the schema descriptor for name field.
+	appDescName := appFields[1].Descriptor()
+	// app.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	app.NameValidator = appDescName.Validators[0].(func(string) error)
 	entityfieldvalueMixin := schema.EntityFieldValue{}.Mixin()
 	entityfieldvalueMixinFields0 := entityfieldvalueMixin[0].Fields()
 	_ = entityfieldvalueMixinFields0

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
@@ -42,7 +43,10 @@ func (l *EntityDetailLogic) EntityDetail(req *types.EntityDetailReq) (resp *type
 		Query().
 		Where(
 			entityrecord.IDEQ(id),
-			entityrecord.HasSchemaDefWith(schemadef.NameEQ(req.SchemaName)),
+			entityrecord.HasSchemaDefWith(
+				schemadef.NameEQ(req.SchemaName),
+				schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+			),
 		).
 		WithFieldValues(func(q *ent.EntityFieldValueQuery) {
 			q.WithFieldDef()

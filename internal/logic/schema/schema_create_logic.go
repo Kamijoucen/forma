@@ -38,19 +38,26 @@ func (l *SchemaCreateLogic) SchemaCreate(req *types.SchemaCreateReq) error {
 		return err
 	}
 
+	// 查找 App
+	app, err := service.QueryAppByCode(l.ctx, l.svcCtx.Ent, req.AppCode)
+	if err != nil {
+		return err
+	}
+
 	if err := util.WithTx(l.ctx, l.svcCtx.Ent, func(tx *ent.Tx) error {
-		return l.Do(tx, req)
+		return l.Do(tx, req, app)
 	}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (l *SchemaCreateLogic) Do(tx *ent.Tx, req *types.SchemaCreateReq) error {
+func (l *SchemaCreateLogic) Do(tx *ent.Tx, req *types.SchemaCreateReq, app *ent.App) error {
 
 	sd, err := tx.SchemaDef.Create().
 		SetName(req.Name).
 		SetDescription(req.Description).
+		SetApp(app).
 		Save(l.ctx)
 	if err != nil {
 		return err

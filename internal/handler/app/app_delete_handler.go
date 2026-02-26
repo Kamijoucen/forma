@@ -1,32 +1,31 @@
 // Code scaffolded by goctl. Safe to edit.
 // goctl 1.9.2
 
-package schema
+package app
 
 import (
 	"net/http"
 
-	"forma/internal/logic/schema"
+	"forma/internal/logic/app"
 	"forma/internal/svc"
 	"forma/internal/types"
-
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func SchemaListHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func AppDeleteHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SchemaListReq
+		var req types.AppDeleteReq
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		l := schema.NewSchemaListLogic(r.Context(), svcCtx)
-		resp, err := l.SchemaList(&req)
+		l := app.NewAppDeleteLogic(r.Context(), svcCtx)
+		err := l.AppDelete(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, resp)
+			httpx.OkJsonCtx(r.Context(), w, nil)
 		}
 	}
 }

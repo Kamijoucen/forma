@@ -1,28 +1,27 @@
 // Code scaffolded by goctl. Safe to edit.
 // goctl 1.9.2
 
-package schema
+package app
 
 import (
 	"net/http"
 
-	"forma/internal/logic/schema"
+	"forma/internal/logic/app"
 	"forma/internal/svc"
 	"forma/internal/types"
-
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func SchemaListHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func AppDetailHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.SchemaListReq
+		var req types.AppDetailReq
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		l := schema.NewSchemaListLogic(r.Context(), svcCtx)
-		resp, err := l.SchemaList(&req)
+		l := app.NewAppDetailLogic(r.Context(), svcCtx)
+		resp, err := l.AppDetail(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {

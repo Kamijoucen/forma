@@ -1,0 +1,38 @@
+syntax = "v1"
+
+type AppCreateReq {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description,optional"`
+}
+
+type AppCreateResp {
+	Id string `json:"id"`
+}
+
+type AppUpdateReq {
+	Code        string `json:"code"`
+	Name        string `json:"name,optional"`
+	Description string `json:"description,optional"`
+}
+
+type AppDeleteReq {
+	Code string `json:"code"`
+}
+
+type AppDetailReq {
+	Code string `form:"code"`
+}
+
+type AppDetailResp {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description,optional"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+type AppListResp {
+	Total int64            `json:"total"`
+	List  []*AppDetailResp `json:"list"`
+}

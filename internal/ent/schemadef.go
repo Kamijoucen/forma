@@ -4,6 +4,7 @@ package ent
 
 import (
 	"fmt"
+	"forma/internal/ent/app"
 	"forma/internal/ent/schemadef"
 	"strings"
 	"time"
@@ -27,25 +28,39 @@ type SchemaDef struct {
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SchemaDefQuery when eager-loading is set.
-	Edges        SchemaDefEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges           SchemaDefEdges `json:"edges"`
+	app_schema_defs *int
+	selectValues    sql.SelectValues
 }
 
 // SchemaDefEdges holds the relations/edges for other nodes in the graph.
 type SchemaDefEdges struct {
+	// 所属App
+	App *App `json:"app,omitempty"`
 	// Schema包含的字段定义
 	FieldDefs []*FieldDef `json:"fieldDefs,omitempty"`
 	// Schema下的实体记录
 	EntityRecords []*EntityRecord `json:"entityRecords,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
+}
+
+// AppOrErr returns the App value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e SchemaDefEdges) AppOrErr() (*App, error) {
+	if e.App != nil {
+		return e.App, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: app.Label}
+	}
+	return nil, &NotLoadedError{edge: "app"}
 }
 
 // FieldDefsOrErr returns the FieldDefs value or an error if the edge
 // was not loaded in eager-loading.
 func (e SchemaDefEdges) FieldDefsOrErr() ([]*FieldDef, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.FieldDefs, nil
 	}
 	return nil, &NotLoadedError{edge: "fieldDefs"}
@@ -54,7 +69,7 @@ func (e SchemaDefEdges) FieldDefsOrErr() ([]*FieldDef, error) {
 // EntityRecordsOrErr returns the EntityRecords value or an error if the edge
 // was not loaded in eager-loading.
 func (e SchemaDefEdges) EntityRecordsOrErr() ([]*EntityRecord, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.EntityRecords, nil
 	}
 	return nil, &NotLoadedError{edge: "entityRecords"}
@@ -71,6 +86,8 @@ func (*SchemaDef) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case schemadef.FieldCreateTime, schemadef.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
+		case schemadef.ForeignKeys[0]: // app_schema_defs
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -116,6 +133,13 @@ func (_m *SchemaDef) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Description = value.String
 			}
+		case schemadef.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field app_schema_defs", value)
+			} else if value.Valid {
+				_m.app_schema_defs = new(int)
+				*_m.app_schema_defs = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -127,6 +151,11 @@ func (_m *SchemaDef) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *SchemaDef) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryApp queries the "app" edge of the SchemaDef entity.
+func (_m *SchemaDef) QueryApp() *AppQuery {
+	return NewSchemaDefClient(_m.config).QueryApp(_m)
 }
 
 // QueryFieldDefs queries the "fieldDefs" edge of the SchemaDef entity.

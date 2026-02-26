@@ -32,12 +32,13 @@ func ValidateSchemaFields(fields []*types.FieldDef) error {
 }
 
 // ToSchemaDetailResp 将 Ent SchemaDef（需 eager load FieldDefs）转为 API 响应
-func ToSchemaDetailResp(sd *ent.SchemaDef) *types.SchemaDetailResp {
+func ToSchemaDetailResp(sd *ent.SchemaDef, appCode string) *types.SchemaDetailResp {
 	fields := make([]*types.FieldDef, 0, len(sd.Edges.FieldDefs))
 	for _, fd := range sd.Edges.FieldDefs {
 		fields = append(fields, ToFieldDef(fd))
 	}
 	return &types.SchemaDetailResp{
+		AppCode:     appCode,
 		Name:        sd.Name,
 		Description: sd.Description,
 		Fields:      fields,

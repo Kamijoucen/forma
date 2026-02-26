@@ -6,6 +6,8 @@ package schema
 import (
 	"context"
 
+	entApp "forma/internal/ent/app"
+	"forma/internal/ent/schemadef"
 	"forma/internal/service"
 	"forma/internal/svc"
 	"forma/internal/types"
@@ -27,9 +29,10 @@ func NewSchemaListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Schema
 	}
 }
 
-func (l *SchemaListLogic) SchemaList() (resp *types.SchemaListResp, err error) {
+func (l *SchemaListLogic) SchemaList(req *types.SchemaListReq) (resp *types.SchemaListResp, err error) {
 	list, err := l.svcCtx.Ent.SchemaDef.
 		Query().
+		Where(schemadef.HasAppWith(entApp.CodeEQ(req.AppCode))).
 		WithFieldDefs().
 		All(l.ctx)
 	if err != nil {
@@ -38,7 +41,7 @@ func (l *SchemaListLogic) SchemaList() (resp *types.SchemaListResp, err error) {
 
 	items := make([]*types.SchemaDetailResp, 0, len(list))
 	for _, sd := range list {
-		items = append(items, service.ToSchemaDetailResp(sd))
+		items = append(items, service.ToSchemaDetailResp(sd, req.AppCode))
 	}
 	return &types.SchemaListResp{
 		Total: int64(len(list)),

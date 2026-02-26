@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/schemadef"
 	"forma/internal/service"
@@ -34,7 +35,10 @@ func NewEntityListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Entity
 func (l *EntityListLogic) EntityList(req *types.EntityListReq) (resp *types.EntityListResp, err error) {
 	query := l.svcCtx.Ent.EntityRecord.
 		Query().
-		Where(entityrecord.HasSchemaDefWith(schemadef.NameEQ(req.SchemaName)))
+		Where(entityrecord.HasSchemaDefWith(
+			schemadef.NameEQ(req.SchemaName),
+			schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+		))
 
 	// 查询总数
 	total, err := query.Count(l.ctx)

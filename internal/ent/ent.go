@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/app"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
@@ -76,6 +77,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			app.Table:              app.ValidColumn,
 			entityfieldvalue.Table: entityfieldvalue.ValidColumn,
 			entityrecord.Table:     entityrecord.ValidColumn,
 			fielddef.Table:         fielddef.ValidColumn,

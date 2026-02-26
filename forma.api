@@ -1,9 +1,32 @@
 syntax = "v1"
 
 import (
+	"api/app.api"
 	"api/schema.api"
 	"api/entity.api"
 )
+
+@server (
+	group:      app
+	prefix:     /api
+	middleware: AuthMiddleware
+)
+service forma-api {
+	@handler AppCreateHandler
+	post /app/create (AppCreateReq) returns (AppCreateResp)
+
+	@handler AppUpdateHandler
+	post /app/update (AppUpdateReq)
+
+	@handler AppDeleteHandler
+	post /app/delete (AppDeleteReq)
+
+	@handler AppDetailHandler
+	get /app/detail (AppDetailReq) returns (AppDetailResp)
+
+	@handler AppListHandler
+	get /app/list returns (AppListResp)
+}
 
 @server (
 	group:      schema
@@ -24,7 +47,7 @@ service forma-api {
 	get /schema/detail (SchemaDetailReq) returns (SchemaDetailResp)
 
 	@handler SchemaListHandler
-	get /schema/list returns (SchemaListResp)
+	get /schema/list (SchemaListReq) returns (SchemaListResp)
 }
 
 @server (

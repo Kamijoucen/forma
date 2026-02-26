@@ -11,6 +11,7 @@ import (
 
 	"forma/internal/ent/migrate"
 
+	"forma/internal/ent/app"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
@@ -27,6 +28,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// App is the client for interacting with the App builders.
+	App *AppClient
 	// EntityFieldValue is the client for interacting with the EntityFieldValue builders.
 	EntityFieldValue *EntityFieldValueClient
 	// EntityRecord is the client for interacting with the EntityRecord builders.
@@ -46,6 +49,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.App = NewAppClient(c.config)
 	c.EntityFieldValue = NewEntityFieldValueClient(c.config)
 	c.EntityRecord = NewEntityRecordClient(c.config)
 	c.FieldDef = NewFieldDefClient(c.config)
@@ -142,6 +146,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:              ctx,
 		config:           cfg,
+		App:              NewAppClient(cfg),
 		EntityFieldValue: NewEntityFieldValueClient(cfg),
 		EntityRecord:     NewEntityRecordClient(cfg),
 		FieldDef:         NewFieldDefClient(cfg),
@@ -165,6 +170,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:              ctx,
 		config:           cfg,
+		App:              NewAppClient(cfg),
 		EntityFieldValue: NewEntityFieldValueClient(cfg),
 		EntityRecord:     NewEntityRecordClient(cfg),
 		FieldDef:         NewFieldDefClient(cfg),
@@ -175,7 +181,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		EntityFieldValue.
+//		App.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -197,6 +203,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.App.Use(hooks...)
 	c.EntityFieldValue.Use(hooks...)
 	c.EntityRecord.Use(hooks...)
 	c.FieldDef.Use(hooks...)
@@ -206,6 +213,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.App.Intercept(interceptors...)
 	c.EntityFieldValue.Intercept(interceptors...)
 	c.EntityRecord.Intercept(interceptors...)
 	c.FieldDef.Intercept(interceptors...)
@@ -215,6 +223,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AppMutation:
+		return c.App.mutate(ctx, m)
 	case *EntityFieldValueMutation:
 		return c.EntityFieldValue.mutate(ctx, m)
 	case *EntityRecordMutation:
@@ -225,6 +235,155 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SchemaDef.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AppClient is a client for the App schema.
+type AppClient struct {
+	config
+}
+
+// NewAppClient returns a client for the App from the given config.
+func NewAppClient(c config) *AppClient {
+	return &AppClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `app.Hooks(f(g(h())))`.
+func (c *AppClient) Use(hooks ...Hook) {
+	c.hooks.App = append(c.hooks.App, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `app.Intercept(f(g(h())))`.
+func (c *AppClient) Intercept(interceptors ...Interceptor) {
+	c.inters.App = append(c.inters.App, interceptors...)
+}
+
+// Create returns a builder for creating a App entity.
+func (c *AppClient) Create() *AppCreate {
+	mutation := newAppMutation(c.config, OpCreate)
+	return &AppCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of App entities.
+func (c *AppClient) CreateBulk(builders ...*AppCreate) *AppCreateBulk {
+	return &AppCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AppClient) MapCreateBulk(slice any, setFunc func(*AppCreate, int)) *AppCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AppCreateBulk{err: fmt.Errorf("calling to AppClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AppCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AppCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for App.
+func (c *AppClient) Update() *AppUpdate {
+	mutation := newAppMutation(c.config, OpUpdate)
+	return &AppUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AppClient) UpdateOne(_m *App) *AppUpdateOne {
+	mutation := newAppMutation(c.config, OpUpdateOne, withApp(_m))
+	return &AppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AppClient) UpdateOneID(id int) *AppUpdateOne {
+	mutation := newAppMutation(c.config, OpUpdateOne, withAppID(id))
+	return &AppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for App.
+func (c *AppClient) Delete() *AppDelete {
+	mutation := newAppMutation(c.config, OpDelete)
+	return &AppDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AppClient) DeleteOne(_m *App) *AppDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AppClient) DeleteOneID(id int) *AppDeleteOne {
+	builder := c.Delete().Where(app.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AppDeleteOne{builder}
+}
+
+// Query returns a query builder for App.
+func (c *AppClient) Query() *AppQuery {
+	return &AppQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeApp},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a App entity by its id.
+func (c *AppClient) Get(ctx context.Context, id int) (*App, error) {
+	return c.Query().Where(app.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AppClient) GetX(ctx context.Context, id int) *App {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySchemaDefs queries the schemaDefs edge of a App.
+func (c *AppClient) QuerySchemaDefs(_m *App) *SchemaDefQuery {
+	query := (&SchemaDefClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(app.Table, app.FieldID, id),
+			sqlgraph.To(schemadef.Table, schemadef.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, app.SchemaDefsTable, app.SchemaDefsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AppClient) Hooks() []Hook {
+	return c.hooks.App
+}
+
+// Interceptors returns the client interceptors.
+func (c *AppClient) Interceptors() []Interceptor {
+	return c.inters.App
+}
+
+func (c *AppClient) mutate(ctx context.Context, m *AppMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AppCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AppUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AppDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown App mutation op: %q", m.Op())
 	}
 }
 
@@ -831,6 +990,22 @@ func (c *SchemaDefClient) GetX(ctx context.Context, id int) *SchemaDef {
 	return obj
 }
 
+// QueryApp queries the app edge of a SchemaDef.
+func (c *SchemaDefClient) QueryApp(_m *SchemaDef) *AppQuery {
+	query := (&AppClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(schemadef.Table, schemadef.FieldID, id),
+			sqlgraph.To(app.Table, app.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, schemadef.AppTable, schemadef.AppColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryFieldDefs queries the fieldDefs edge of a SchemaDef.
 func (c *SchemaDefClient) QueryFieldDefs(_m *SchemaDef) *FieldDefQuery {
 	query := (&FieldDefClient{config: c.config}).Query()
@@ -891,9 +1066,9 @@ func (c *SchemaDefClient) mutate(ctx context.Context, m *SchemaDefMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Hook
+		App, EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Hook
 	}
 	inters struct {
-		EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Interceptor
+		App, EntityFieldValue, EntityRecord, FieldDef, SchemaDef []ent.Interceptor
 	}
 )

@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"forma/internal/ent/app"
-	"forma/internal/ent/entityrecord"
-	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
 	"time"
 
@@ -17,22 +15,22 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// SchemaDefCreate is the builder for creating a SchemaDef entity.
-type SchemaDefCreate struct {
+// AppCreate is the builder for creating a App entity.
+type AppCreate struct {
 	config
-	mutation *SchemaDefMutation
+	mutation *AppMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
 }
 
 // SetCreateTime sets the "create_time" field.
-func (_c *SchemaDefCreate) SetCreateTime(v time.Time) *SchemaDefCreate {
+func (_c *AppCreate) SetCreateTime(v time.Time) *AppCreate {
 	_c.mutation.SetCreateTime(v)
 	return _c
 }
 
 // SetNillableCreateTime sets the "create_time" field if the given value is not nil.
-func (_c *SchemaDefCreate) SetNillableCreateTime(v *time.Time) *SchemaDefCreate {
+func (_c *AppCreate) SetNillableCreateTime(v *time.Time) *AppCreate {
 	if v != nil {
 		_c.SetCreateTime(*v)
 	}
@@ -40,93 +38,73 @@ func (_c *SchemaDefCreate) SetNillableCreateTime(v *time.Time) *SchemaDefCreate 
 }
 
 // SetUpdateTime sets the "update_time" field.
-func (_c *SchemaDefCreate) SetUpdateTime(v time.Time) *SchemaDefCreate {
+func (_c *AppCreate) SetUpdateTime(v time.Time) *AppCreate {
 	_c.mutation.SetUpdateTime(v)
 	return _c
 }
 
 // SetNillableUpdateTime sets the "update_time" field if the given value is not nil.
-func (_c *SchemaDefCreate) SetNillableUpdateTime(v *time.Time) *SchemaDefCreate {
+func (_c *AppCreate) SetNillableUpdateTime(v *time.Time) *AppCreate {
 	if v != nil {
 		_c.SetUpdateTime(*v)
 	}
 	return _c
 }
 
+// SetCode sets the "code" field.
+func (_c *AppCreate) SetCode(v string) *AppCreate {
+	_c.mutation.SetCode(v)
+	return _c
+}
+
 // SetName sets the "name" field.
-func (_c *SchemaDefCreate) SetName(v string) *SchemaDefCreate {
+func (_c *AppCreate) SetName(v string) *AppCreate {
 	_c.mutation.SetName(v)
 	return _c
 }
 
 // SetDescription sets the "description" field.
-func (_c *SchemaDefCreate) SetDescription(v string) *SchemaDefCreate {
+func (_c *AppCreate) SetDescription(v string) *AppCreate {
 	_c.mutation.SetDescription(v)
 	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (_c *SchemaDefCreate) SetNillableDescription(v *string) *SchemaDefCreate {
+func (_c *AppCreate) SetNillableDescription(v *string) *AppCreate {
 	if v != nil {
 		_c.SetDescription(*v)
 	}
 	return _c
 }
 
-// SetAppID sets the "app" edge to the App entity by ID.
-func (_c *SchemaDefCreate) SetAppID(id int) *SchemaDefCreate {
-	_c.mutation.SetAppID(id)
+// AddSchemaDefIDs adds the "schemaDefs" edge to the SchemaDef entity by IDs.
+func (_c *AppCreate) AddSchemaDefIDs(ids ...int) *AppCreate {
+	_c.mutation.AddSchemaDefIDs(ids...)
 	return _c
 }
 
-// SetApp sets the "app" edge to the App entity.
-func (_c *SchemaDefCreate) SetApp(v *App) *SchemaDefCreate {
-	return _c.SetAppID(v.ID)
-}
-
-// AddFieldDefIDs adds the "fieldDefs" edge to the FieldDef entity by IDs.
-func (_c *SchemaDefCreate) AddFieldDefIDs(ids ...int) *SchemaDefCreate {
-	_c.mutation.AddFieldDefIDs(ids...)
-	return _c
-}
-
-// AddFieldDefs adds the "fieldDefs" edges to the FieldDef entity.
-func (_c *SchemaDefCreate) AddFieldDefs(v ...*FieldDef) *SchemaDefCreate {
+// AddSchemaDefs adds the "schemaDefs" edges to the SchemaDef entity.
+func (_c *AppCreate) AddSchemaDefs(v ...*SchemaDef) *AppCreate {
 	ids := make([]int, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddFieldDefIDs(ids...)
+	return _c.AddSchemaDefIDs(ids...)
 }
 
-// AddEntityRecordIDs adds the "entityRecords" edge to the EntityRecord entity by IDs.
-func (_c *SchemaDefCreate) AddEntityRecordIDs(ids ...int) *SchemaDefCreate {
-	_c.mutation.AddEntityRecordIDs(ids...)
-	return _c
-}
-
-// AddEntityRecords adds the "entityRecords" edges to the EntityRecord entity.
-func (_c *SchemaDefCreate) AddEntityRecords(v ...*EntityRecord) *SchemaDefCreate {
-	ids := make([]int, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddEntityRecordIDs(ids...)
-}
-
-// Mutation returns the SchemaDefMutation object of the builder.
-func (_c *SchemaDefCreate) Mutation() *SchemaDefMutation {
+// Mutation returns the AppMutation object of the builder.
+func (_c *AppCreate) Mutation() *AppMutation {
 	return _c.mutation
 }
 
-// Save creates the SchemaDef in the database.
-func (_c *SchemaDefCreate) Save(ctx context.Context) (*SchemaDef, error) {
+// Save creates the App in the database.
+func (_c *AppCreate) Save(ctx context.Context) (*App, error) {
 	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *SchemaDefCreate) SaveX(ctx context.Context) *SchemaDef {
+func (_c *AppCreate) SaveX(ctx context.Context) *App {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -135,53 +113,58 @@ func (_c *SchemaDefCreate) SaveX(ctx context.Context) *SchemaDef {
 }
 
 // Exec executes the query.
-func (_c *SchemaDefCreate) Exec(ctx context.Context) error {
+func (_c *AppCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *SchemaDefCreate) ExecX(ctx context.Context) {
+func (_c *AppCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *SchemaDefCreate) defaults() {
+func (_c *AppCreate) defaults() {
 	if _, ok := _c.mutation.CreateTime(); !ok {
-		v := schemadef.DefaultCreateTime()
+		v := app.DefaultCreateTime()
 		_c.mutation.SetCreateTime(v)
 	}
 	if _, ok := _c.mutation.UpdateTime(); !ok {
-		v := schemadef.DefaultUpdateTime()
+		v := app.DefaultUpdateTime()
 		_c.mutation.SetUpdateTime(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *SchemaDefCreate) check() error {
+func (_c *AppCreate) check() error {
 	if _, ok := _c.mutation.CreateTime(); !ok {
-		return &ValidationError{Name: "create_time", err: errors.New(`ent: missing required field "SchemaDef.create_time"`)}
+		return &ValidationError{Name: "create_time", err: errors.New(`ent: missing required field "App.create_time"`)}
 	}
 	if _, ok := _c.mutation.UpdateTime(); !ok {
-		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "SchemaDef.update_time"`)}
+		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "App.update_time"`)}
 	}
-	if _, ok := _c.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "SchemaDef.name"`)}
+	if _, ok := _c.mutation.Code(); !ok {
+		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "App.code"`)}
 	}
-	if v, ok := _c.mutation.Name(); ok {
-		if err := schemadef.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SchemaDef.name": %w`, err)}
+	if v, ok := _c.mutation.Code(); ok {
+		if err := app.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "App.code": %w`, err)}
 		}
 	}
-	if len(_c.mutation.AppIDs()) == 0 {
-		return &ValidationError{Name: "app", err: errors.New(`ent: missing required edge "SchemaDef.app"`)}
+	if _, ok := _c.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "App.name"`)}
+	}
+	if v, ok := _c.mutation.Name(); ok {
+		if err := app.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "App.name": %w`, err)}
+		}
 	}
 	return nil
 }
 
-func (_c *SchemaDefCreate) sqlSave(ctx context.Context) (*SchemaDef, error) {
+func (_c *AppCreate) sqlSave(ctx context.Context) (*App, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -199,70 +182,41 @@ func (_c *SchemaDefCreate) sqlSave(ctx context.Context) (*SchemaDef, error) {
 	return _node, nil
 }
 
-func (_c *SchemaDefCreate) createSpec() (*SchemaDef, *sqlgraph.CreateSpec) {
+func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 	var (
-		_node = &SchemaDef{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(schemadef.Table, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
+		_node = &App{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(app.Table, sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt))
 	)
 	_spec.OnConflict = _c.conflict
 	if value, ok := _c.mutation.CreateTime(); ok {
-		_spec.SetField(schemadef.FieldCreateTime, field.TypeTime, value)
+		_spec.SetField(app.FieldCreateTime, field.TypeTime, value)
 		_node.CreateTime = value
 	}
 	if value, ok := _c.mutation.UpdateTime(); ok {
-		_spec.SetField(schemadef.FieldUpdateTime, field.TypeTime, value)
+		_spec.SetField(app.FieldUpdateTime, field.TypeTime, value)
 		_node.UpdateTime = value
 	}
+	if value, ok := _c.mutation.Code(); ok {
+		_spec.SetField(app.FieldCode, field.TypeString, value)
+		_node.Code = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
-		_spec.SetField(schemadef.FieldName, field.TypeString, value)
+		_spec.SetField(app.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
-		_spec.SetField(schemadef.FieldDescription, field.TypeString, value)
+		_spec.SetField(app.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if nodes := _c.mutation.AppIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   schemadef.AppTable,
-			Columns: []string{schemadef.AppColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.app_schema_defs = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.FieldDefsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.SchemaDefsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   schemadef.FieldDefsTable,
-			Columns: []string{schemadef.FieldDefsColumn},
+			Table:   app.SchemaDefsTable,
+			Columns: []string{app.SchemaDefsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.EntityRecordsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   schemadef.EntityRecordsTable,
-			Columns: []string{schemadef.EntityRecordsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(entityrecord.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -276,7 +230,7 @@ func (_c *SchemaDefCreate) createSpec() (*SchemaDef, *sqlgraph.CreateSpec) {
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		SetCreateTime(v).
 //		OnConflict(
 //			// Update the row with the new values
@@ -285,13 +239,13 @@ func (_c *SchemaDefCreate) createSpec() (*SchemaDef, *sqlgraph.CreateSpec) {
 //		).
 //		// Override some of the fields with custom
 //		// update values.
-//		Update(func(u *ent.SchemaDefUpsert) {
+//		Update(func(u *ent.AppUpsert) {
 //			SetCreateTime(v+v).
 //		}).
 //		Exec(ctx)
-func (_c *SchemaDefCreate) OnConflict(opts ...sql.ConflictOption) *SchemaDefUpsertOne {
+func (_c *AppCreate) OnConflict(opts ...sql.ConflictOption) *AppUpsertOne {
 	_c.conflict = opts
-	return &SchemaDefUpsertOne{
+	return &AppUpsertOne{
 		create: _c,
 	}
 }
@@ -299,75 +253,87 @@ func (_c *SchemaDefCreate) OnConflict(opts ...sql.ConflictOption) *SchemaDefUpse
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (_c *SchemaDefCreate) OnConflictColumns(columns ...string) *SchemaDefUpsertOne {
+func (_c *AppCreate) OnConflictColumns(columns ...string) *AppUpsertOne {
 	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
-	return &SchemaDefUpsertOne{
+	return &AppUpsertOne{
 		create: _c,
 	}
 }
 
 type (
-	// SchemaDefUpsertOne is the builder for "upsert"-ing
-	//  one SchemaDef node.
-	SchemaDefUpsertOne struct {
-		create *SchemaDefCreate
+	// AppUpsertOne is the builder for "upsert"-ing
+	//  one App node.
+	AppUpsertOne struct {
+		create *AppCreate
 	}
 
-	// SchemaDefUpsert is the "OnConflict" setter.
-	SchemaDefUpsert struct {
+	// AppUpsert is the "OnConflict" setter.
+	AppUpsert struct {
 		*sql.UpdateSet
 	}
 )
 
 // SetUpdateTime sets the "update_time" field.
-func (u *SchemaDefUpsert) SetUpdateTime(v time.Time) *SchemaDefUpsert {
-	u.Set(schemadef.FieldUpdateTime, v)
+func (u *AppUpsert) SetUpdateTime(v time.Time) *AppUpsert {
+	u.Set(app.FieldUpdateTime, v)
 	return u
 }
 
 // UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
-func (u *SchemaDefUpsert) UpdateUpdateTime() *SchemaDefUpsert {
-	u.SetExcluded(schemadef.FieldUpdateTime)
+func (u *AppUpsert) UpdateUpdateTime() *AppUpsert {
+	u.SetExcluded(app.FieldUpdateTime)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *AppUpsert) SetName(v string) *AppUpsert {
+	u.Set(app.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AppUpsert) UpdateName() *AppUpsert {
+	u.SetExcluded(app.FieldName)
 	return u
 }
 
 // SetDescription sets the "description" field.
-func (u *SchemaDefUpsert) SetDescription(v string) *SchemaDefUpsert {
-	u.Set(schemadef.FieldDescription, v)
+func (u *AppUpsert) SetDescription(v string) *AppUpsert {
+	u.Set(app.FieldDescription, v)
 	return u
 }
 
 // UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SchemaDefUpsert) UpdateDescription() *SchemaDefUpsert {
-	u.SetExcluded(schemadef.FieldDescription)
+func (u *AppUpsert) UpdateDescription() *AppUpsert {
+	u.SetExcluded(app.FieldDescription)
 	return u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (u *SchemaDefUpsert) ClearDescription() *SchemaDefUpsert {
-	u.SetNull(schemadef.FieldDescription)
+func (u *AppUpsert) ClearDescription() *AppUpsert {
+	u.SetNull(app.FieldDescription)
 	return u
 }
 
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-func (u *SchemaDefUpsertOne) UpdateNewValues() *SchemaDefUpsertOne {
+func (u *AppUpsertOne) UpdateNewValues() *AppUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.CreateTime(); exists {
-			s.SetIgnore(schemadef.FieldCreateTime)
+			s.SetIgnore(app.FieldCreateTime)
 		}
-		if _, exists := u.create.mutation.Name(); exists {
-			s.SetIgnore(schemadef.FieldName)
+		if _, exists := u.create.mutation.Code(); exists {
+			s.SetIgnore(app.FieldCode)
 		}
 	}))
 	return u
@@ -376,82 +342,96 @@ func (u *SchemaDefUpsertOne) UpdateNewValues() *SchemaDefUpsertOne {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //	    OnConflict(sql.ResolveWithIgnore()).
 //	    Exec(ctx)
-func (u *SchemaDefUpsertOne) Ignore() *SchemaDefUpsertOne {
+func (u *AppUpsertOne) Ignore() *AppUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *SchemaDefUpsertOne) DoNothing() *SchemaDefUpsertOne {
+func (u *AppUpsertOne) DoNothing() *AppUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the SchemaDefCreate.OnConflict
+// Update allows overriding fields `UPDATE` values. See the AppCreate.OnConflict
 // documentation for more info.
-func (u *SchemaDefUpsertOne) Update(set func(*SchemaDefUpsert)) *SchemaDefUpsertOne {
+func (u *AppUpsertOne) Update(set func(*AppUpsert)) *AppUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&SchemaDefUpsert{UpdateSet: update})
+		set(&AppUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // SetUpdateTime sets the "update_time" field.
-func (u *SchemaDefUpsertOne) SetUpdateTime(v time.Time) *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertOne) SetUpdateTime(v time.Time) *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
 		s.SetUpdateTime(v)
 	})
 }
 
 // UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
-func (u *SchemaDefUpsertOne) UpdateUpdateTime() *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertOne) UpdateUpdateTime() *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
 		s.UpdateUpdateTime()
 	})
 }
 
+// SetName sets the "name" field.
+func (u *AppUpsertOne) SetName(v string) *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AppUpsertOne) UpdateName() *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
+		s.UpdateName()
+	})
+}
+
 // SetDescription sets the "description" field.
-func (u *SchemaDefUpsertOne) SetDescription(v string) *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertOne) SetDescription(v string) *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
 		s.SetDescription(v)
 	})
 }
 
 // UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SchemaDefUpsertOne) UpdateDescription() *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertOne) UpdateDescription() *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
 		s.UpdateDescription()
 	})
 }
 
 // ClearDescription clears the value of the "description" field.
-func (u *SchemaDefUpsertOne) ClearDescription() *SchemaDefUpsertOne {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertOne) ClearDescription() *AppUpsertOne {
+	return u.Update(func(s *AppUpsert) {
 		s.ClearDescription()
 	})
 }
 
 // Exec executes the query.
-func (u *SchemaDefUpsertOne) Exec(ctx context.Context) error {
+func (u *AppUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for SchemaDefCreate.OnConflict")
+		return errors.New("ent: missing options for AppCreate.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *SchemaDefUpsertOne) ExecX(ctx context.Context) {
+func (u *AppUpsertOne) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *SchemaDefUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *AppUpsertOne) ID(ctx context.Context) (id int, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -460,7 +440,7 @@ func (u *SchemaDefUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *SchemaDefUpsertOne) IDX(ctx context.Context) int {
+func (u *AppUpsertOne) IDX(ctx context.Context) int {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -468,28 +448,28 @@ func (u *SchemaDefUpsertOne) IDX(ctx context.Context) int {
 	return id
 }
 
-// SchemaDefCreateBulk is the builder for creating many SchemaDef entities in bulk.
-type SchemaDefCreateBulk struct {
+// AppCreateBulk is the builder for creating many App entities in bulk.
+type AppCreateBulk struct {
 	config
 	err      error
-	builders []*SchemaDefCreate
+	builders []*AppCreate
 	conflict []sql.ConflictOption
 }
 
-// Save creates the SchemaDef entities in the database.
-func (_c *SchemaDefCreateBulk) Save(ctx context.Context) ([]*SchemaDef, error) {
+// Save creates the App entities in the database.
+func (_c *AppCreateBulk) Save(ctx context.Context) ([]*App, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*SchemaDef, len(_c.builders))
+	nodes := make([]*App, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*SchemaDefMutation)
+				mutation, ok := m.(*AppMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -537,7 +517,7 @@ func (_c *SchemaDefCreateBulk) Save(ctx context.Context) ([]*SchemaDef, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *SchemaDefCreateBulk) SaveX(ctx context.Context) []*SchemaDef {
+func (_c *AppCreateBulk) SaveX(ctx context.Context) []*App {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -546,13 +526,13 @@ func (_c *SchemaDefCreateBulk) SaveX(ctx context.Context) []*SchemaDef {
 }
 
 // Exec executes the query.
-func (_c *SchemaDefCreateBulk) Exec(ctx context.Context) error {
+func (_c *AppCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *SchemaDefCreateBulk) ExecX(ctx context.Context) {
+func (_c *AppCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
@@ -561,7 +541,7 @@ func (_c *SchemaDefCreateBulk) ExecX(ctx context.Context) {
 // OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
 // of the `INSERT` statement. For example:
 //
-//	client.SchemaDef.CreateBulk(builders...).
+//	client.App.CreateBulk(builders...).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -569,13 +549,13 @@ func (_c *SchemaDefCreateBulk) ExecX(ctx context.Context) {
 //		).
 //		// Override some of the fields with custom
 //		// update values.
-//		Update(func(u *ent.SchemaDefUpsert) {
+//		Update(func(u *ent.AppUpsert) {
 //			SetCreateTime(v+v).
 //		}).
 //		Exec(ctx)
-func (_c *SchemaDefCreateBulk) OnConflict(opts ...sql.ConflictOption) *SchemaDefUpsertBulk {
+func (_c *AppCreateBulk) OnConflict(opts ...sql.ConflictOption) *AppUpsertBulk {
 	_c.conflict = opts
-	return &SchemaDefUpsertBulk{
+	return &AppUpsertBulk{
 		create: _c,
 	}
 }
@@ -583,39 +563,39 @@ func (_c *SchemaDefCreateBulk) OnConflict(opts ...sql.ConflictOption) *SchemaDef
 // OnConflictColumns calls `OnConflict` and configures the columns
 // as conflict target. Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (_c *SchemaDefCreateBulk) OnConflictColumns(columns ...string) *SchemaDefUpsertBulk {
+func (_c *AppCreateBulk) OnConflictColumns(columns ...string) *AppUpsertBulk {
 	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
-	return &SchemaDefUpsertBulk{
+	return &AppUpsertBulk{
 		create: _c,
 	}
 }
 
-// SchemaDefUpsertBulk is the builder for "upsert"-ing
-// a bulk of SchemaDef nodes.
-type SchemaDefUpsertBulk struct {
-	create *SchemaDefCreateBulk
+// AppUpsertBulk is the builder for "upsert"-ing
+// a bulk of App nodes.
+type AppUpsertBulk struct {
+	create *AppCreateBulk
 }
 
 // UpdateNewValues updates the mutable fields using the new values that
 // were set on create. Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		OnConflict(
 //			sql.ResolveWithNewValues(),
 //		).
 //		Exec(ctx)
-func (u *SchemaDefUpsertBulk) UpdateNewValues() *SchemaDefUpsertBulk {
+func (u *AppUpsertBulk) UpdateNewValues() *AppUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.CreateTime(); exists {
-				s.SetIgnore(schemadef.FieldCreateTime)
+				s.SetIgnore(app.FieldCreateTime)
 			}
-			if _, exists := b.mutation.Name(); exists {
-				s.SetIgnore(schemadef.FieldName)
+			if _, exists := b.mutation.Code(); exists {
+				s.SetIgnore(app.FieldCode)
 			}
 		}
 	}))
@@ -625,83 +605,97 @@ func (u *SchemaDefUpsertBulk) UpdateNewValues() *SchemaDefUpsertBulk {
 // Ignore sets each column to itself in case of conflict.
 // Using this option is equivalent to using:
 //
-//	client.SchemaDef.Create().
+//	client.App.Create().
 //		OnConflict(sql.ResolveWithIgnore()).
 //		Exec(ctx)
-func (u *SchemaDefUpsertBulk) Ignore() *SchemaDefUpsertBulk {
+func (u *AppUpsertBulk) Ignore() *AppUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
 	return u
 }
 
 // DoNothing configures the conflict_action to `DO NOTHING`.
 // Supported only by SQLite and PostgreSQL.
-func (u *SchemaDefUpsertBulk) DoNothing() *SchemaDefUpsertBulk {
+func (u *AppUpsertBulk) DoNothing() *AppUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.DoNothing())
 	return u
 }
 
-// Update allows overriding fields `UPDATE` values. See the SchemaDefCreateBulk.OnConflict
+// Update allows overriding fields `UPDATE` values. See the AppCreateBulk.OnConflict
 // documentation for more info.
-func (u *SchemaDefUpsertBulk) Update(set func(*SchemaDefUpsert)) *SchemaDefUpsertBulk {
+func (u *AppUpsertBulk) Update(set func(*AppUpsert)) *AppUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
-		set(&SchemaDefUpsert{UpdateSet: update})
+		set(&AppUpsert{UpdateSet: update})
 	}))
 	return u
 }
 
 // SetUpdateTime sets the "update_time" field.
-func (u *SchemaDefUpsertBulk) SetUpdateTime(v time.Time) *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertBulk) SetUpdateTime(v time.Time) *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
 		s.SetUpdateTime(v)
 	})
 }
 
 // UpdateUpdateTime sets the "update_time" field to the value that was provided on create.
-func (u *SchemaDefUpsertBulk) UpdateUpdateTime() *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertBulk) UpdateUpdateTime() *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
 		s.UpdateUpdateTime()
 	})
 }
 
+// SetName sets the "name" field.
+func (u *AppUpsertBulk) SetName(v string) *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *AppUpsertBulk) UpdateName() *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
+		s.UpdateName()
+	})
+}
+
 // SetDescription sets the "description" field.
-func (u *SchemaDefUpsertBulk) SetDescription(v string) *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertBulk) SetDescription(v string) *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
 		s.SetDescription(v)
 	})
 }
 
 // UpdateDescription sets the "description" field to the value that was provided on create.
-func (u *SchemaDefUpsertBulk) UpdateDescription() *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertBulk) UpdateDescription() *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
 		s.UpdateDescription()
 	})
 }
 
 // ClearDescription clears the value of the "description" field.
-func (u *SchemaDefUpsertBulk) ClearDescription() *SchemaDefUpsertBulk {
-	return u.Update(func(s *SchemaDefUpsert) {
+func (u *AppUpsertBulk) ClearDescription() *AppUpsertBulk {
+	return u.Update(func(s *AppUpsert) {
 		s.ClearDescription()
 	})
 }
 
 // Exec executes the query.
-func (u *SchemaDefUpsertBulk) Exec(ctx context.Context) error {
+func (u *AppUpsertBulk) Exec(ctx context.Context) error {
 	if u.create.err != nil {
 		return u.create.err
 	}
 	for i, b := range u.create.builders {
 		if len(b.conflict) != 0 {
-			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the SchemaDefCreateBulk instead", i)
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the AppCreateBulk instead", i)
 		}
 	}
 	if len(u.create.conflict) == 0 {
-		return errors.New("ent: missing options for SchemaDefCreateBulk.OnConflict")
+		return errors.New("ent: missing options for AppCreateBulk.OnConflict")
 	}
 	return u.create.Exec(ctx)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (u *SchemaDefUpsertBulk) ExecX(ctx context.Context) {
+func (u *AppUpsertBulk) ExecX(ctx context.Context) {
 	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}

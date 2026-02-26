@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
 	"forma/internal/service"
@@ -34,10 +35,13 @@ func NewEntityCreateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Enti
 }
 
 func (l *EntityCreateLogic) EntityCreate(req *types.EntityCreateReq) (resp *types.EntityCreateResp, err error) {
-	// 查询 Schema 及其字段定义
+	// 查询 Schema 及其字段定义（按 app 过滤）
 	sd, err := l.svcCtx.Ent.SchemaDef.
 		Query().
-		Where(schemadef.NameEQ(req.SchemaName)).
+		Where(
+			schemadef.NameEQ(req.SchemaName),
+			schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+		).
 		WithFieldDefs().
 		Only(l.ctx)
 	if err != nil {

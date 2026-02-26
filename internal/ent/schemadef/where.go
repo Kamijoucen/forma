@@ -295,6 +295,29 @@ func DescriptionContainsFold(v string) predicate.SchemaDef {
 	return predicate.SchemaDef(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// HasApp applies the HasEdge predicate on the "app" edge.
+func HasApp() predicate.SchemaDef {
+	return predicate.SchemaDef(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, AppTable, AppColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAppWith applies the HasEdge predicate on the "app" edge with a given conditions (other predicates).
+func HasAppWith(preds ...predicate.App) predicate.SchemaDef {
+	return predicate.SchemaDef(func(s *sql.Selector) {
+		step := newAppStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasFieldDefs applies the HasEdge predicate on the "fieldDefs" edge.
 func HasFieldDefs() predicate.SchemaDef {
 	return predicate.SchemaDef(func(s *sql.Selector) {

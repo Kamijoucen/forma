@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
 	"forma/internal/service"
@@ -33,7 +34,10 @@ func NewSchemaDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Sche
 func (l *SchemaDetailLogic) SchemaDetail(req *types.SchemaDetailReq) (resp *types.SchemaDetailResp, err error) {
 	sd, err := l.svcCtx.Ent.SchemaDef.
 		Query().
-		Where(schemadef.NameEQ(req.Name)).
+		Where(
+			schemadef.NameEQ(req.Name),
+			schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+		).
 		WithFieldDefs().
 		Only(l.ctx)
 	if err != nil {
@@ -42,5 +46,5 @@ func (l *SchemaDetailLogic) SchemaDetail(req *types.SchemaDetailReq) (resp *type
 		}
 		return nil, err
 	}
-	return service.ToSchemaDetailResp(sd), nil
+	return service.ToSchemaDetailResp(sd, req.AppCode), nil
 }

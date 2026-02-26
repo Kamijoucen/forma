@@ -8,6 +8,21 @@ import (
 )
 
 var (
+	// AppsColumns holds the columns for the "apps" table.
+	AppsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "code", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+	}
+	// AppsTable holds the schema information for the "apps" table.
+	AppsTable = &schema.Table{
+		Name:       "apps",
+		Columns:    AppsColumns,
+		PrimaryKey: []*schema.Column{AppsColumns[0]},
+	}
 	// EntityFieldValuesColumns holds the columns for the "entity_field_values" table.
 	EntityFieldValuesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -98,17 +113,34 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "app_schema_defs", Type: field.TypeInt},
 	}
 	// SchemaDefsTable holds the schema information for the "schema_defs" table.
 	SchemaDefsTable = &schema.Table{
 		Name:       "schema_defs",
 		Columns:    SchemaDefsColumns,
 		PrimaryKey: []*schema.Column{SchemaDefsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "schema_defs_apps_schemaDefs",
+				Columns:    []*schema.Column{SchemaDefsColumns[5]},
+				RefColumns: []*schema.Column{AppsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "schemadef_name_app_schema_defs",
+				Unique:  true,
+				Columns: []*schema.Column{SchemaDefsColumns[3], SchemaDefsColumns[5]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AppsTable,
 		EntityFieldValuesTable,
 		EntityRecordsTable,
 		FieldDefsTable,
@@ -121,4 +153,5 @@ func init() {
 	EntityFieldValuesTable.ForeignKeys[1].RefTable = FieldDefsTable
 	EntityRecordsTable.ForeignKeys[0].RefTable = SchemaDefsTable
 	FieldDefsTable.ForeignKeys[0].RefTable = SchemaDefsTable
+	SchemaDefsTable.ForeignKeys[0].RefTable = AppsTable
 }

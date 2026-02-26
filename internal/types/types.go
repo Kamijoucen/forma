@@ -3,7 +3,45 @@
 
 package types
 
+type AppCreateReq struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description,optional"`
+}
+
+type AppCreateResp struct {
+	Id string `json:"id"`
+}
+
+type AppDeleteReq struct {
+	Code string `json:"code"`
+}
+
+type AppDetailReq struct {
+	Code string `form:"code"`
+}
+
+type AppDetailResp struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description,optional"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+type AppListResp struct {
+	Total int64            `json:"total"`
+	List  []*AppDetailResp `json:"list"`
+}
+
+type AppUpdateReq struct {
+	Code        string `json:"code"`
+	Name        string `json:"name,optional"`
+	Description string `json:"description,optional"`
+}
+
 type EntityCreateReq struct {
+	AppCode    string             `json:"appCode"`
 	SchemaName string             `json:"schemaName"`
 	Fields     []*FieldValueInput `json:"fields"`
 }
@@ -13,11 +51,13 @@ type EntityCreateResp struct {
 }
 
 type EntityDeleteReq struct {
+	AppCode    string `json:"appCode"`
 	SchemaName string `json:"schemaName"`
 	Id         string `json:"id"`
 }
 
 type EntityDetailReq struct {
+	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Id         string `form:"id"`
 }
@@ -31,6 +71,7 @@ type EntityDetailResp struct {
 }
 
 type EntityListReq struct {
+	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Page       int    `form:"page,default=1"`
 	PageSize   int    `form:"pageSize,default=20"`
@@ -42,20 +83,20 @@ type EntityListResp struct {
 }
 
 type EntityUpdateReq struct {
+	AppCode    string             `json:"appCode"`
 	SchemaName string             `json:"schemaName"`
 	Id         string             `json:"id"`
 	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type FieldDef struct {
-	Name         string   `json:"name"`
-	Type         string   `json:"type"` // string, int, float, bool, text, datetime, enum, json, array
-	Required     bool     `json:"required"`
-	MaxLength    int      `json:"maxLength,optional"`
-	MinLength    int      `json:"minLength,optional"`
-	DefaultValue string   `json:"defaultValue,optional"`
-	EnumValues   []string `json:"enumValues,optional"`
-	Description  string   `json:"description,optional"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"` // string, int, float, bool, text, datetime, enum, json, array
+	Required    bool     `json:"required"`
+	MaxLength   int      `json:"maxLength,optional"`
+	MinLength   int      `json:"minLength,optional"`
+	EnumValues  []string `json:"enumValues,optional"`
+	Description string   `json:"description,optional"`
 }
 
 type FieldValue struct {
@@ -70,27 +111,33 @@ type FieldValueInput struct {
 }
 
 type SchemaCreateReq struct {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaDeleteReq struct {
-	Name string `json:"name"`
+	AppCode string `json:"appCode"`
+	Name    string `json:"name"`
 }
 
 type SchemaDetailReq struct {
-	Name string `form:"name"`
+	AppCode string `form:"appCode"`
+	Name    string `form:"name"`
 }
 
 type SchemaDetailResp struct {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 	CreatedAt   string      `json:"createdAt"`
 	UpdatedAt   string      `json:"updatedAt"`
+}
+
+type SchemaListReq struct {
+	AppCode string `form:"appCode"`
 }
 
 type SchemaListResp struct {
@@ -99,8 +146,8 @@ type SchemaListResp struct {
 }
 
 type SchemaUpdateReq struct {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 }

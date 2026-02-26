@@ -8,6 +8,7 @@ import (
 
 	"forma/internal/constant"
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/schemadef"
 	"forma/internal/errorx"
@@ -40,10 +41,13 @@ func (l *SchemaUpdateLogic) SchemaUpdate(req *types.SchemaUpdateReq) error {
 	}
 
 	return util.WithTx(l.ctx, l.svcCtx.Ent, func(tx *ent.Tx) error {
-		// 查找 Schema
+		// 查找 Schema（按 app 过滤）
 		sd, err := tx.SchemaDef.
 			Query().
-			Where(schemadef.NameEQ(req.Name)).
+			Where(
+				schemadef.NameEQ(req.Name),
+				schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+			).
 			Only(l.ctx)
 		if err != nil {
 			if ent.IsNotFound(err) {

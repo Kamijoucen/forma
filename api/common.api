@@ -7,7 +7,6 @@ type FieldDef {
 	Required     bool     `json:"required"`
 	MaxLength    int      `json:"maxLength,optional"`
 	MinLength    int      `json:"minLength,optional"`
-	DefaultValue string   `json:"defaultValue,optional"`
 	EnumValues   []string `json:"enumValues,optional"`
 	Description  string   `json:"description,optional"`
 }

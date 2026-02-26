@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"forma/internal/ent"
+	entApp "forma/internal/ent/app"
 	"forma/internal/ent/entityfieldvalue"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/schemadef"
@@ -40,12 +41,15 @@ func (l *EntityDeleteLogic) EntityDelete(req *types.EntityDeleteReq) error {
 	}
 
 	return util.WithTx(l.ctx, l.svcCtx.Ent, func(tx *ent.Tx) error {
-		// 验证 EntityRecord 存在且属于该 Schema
+		// 验证 EntityRecord 存在且属于该 Schema（按 app 过滤）
 		record, err := tx.EntityRecord.
 			Query().
 			Where(
 				entityrecord.IDEQ(id),
-				entityrecord.HasSchemaDefWith(schemadef.NameEQ(req.SchemaName)),
+				entityrecord.HasSchemaDefWith(
+					schemadef.NameEQ(req.SchemaName),
+					schemadef.HasAppWith(entApp.CodeEQ(req.AppCode)),
+				),
 			).
 			Only(l.ctx)
 		if err != nil {

@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// App is the predicate function for app builders.
+type App func(*sql.Selector)
+
 // EntityFieldValue is the predicate function for entityfieldvalue builders.
 type EntityFieldValue func(*sql.Selector)
 

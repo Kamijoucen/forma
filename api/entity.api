@@ -3,6 +3,7 @@ syntax = "v1"
 import "common.api"
 
 type EntityCreateReq {
+	AppCode    string             `json:"appCode"`
 	SchemaName string             `json:"schemaName"`
 	Fields     []*FieldValueInput `json:"fields"`
 }
@@ -12,17 +13,20 @@ type EntityCreateResp {
 }
 
 type EntityUpdateReq {
+	AppCode    string             `json:"appCode"`
 	SchemaName string             `json:"schemaName"`
 	Id         string             `json:"id"`
 	Fields     []*FieldValueInput `json:"fields"`
 }
 
 type EntityDeleteReq {
+	AppCode    string `json:"appCode"`
 	SchemaName string `json:"schemaName"`
 	Id         string `json:"id"`
 }
 
 type EntityDetailReq {
+	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Id         string `form:"id"`
 }
@@ -36,6 +40,7 @@ type EntityDetailResp {
 }
 
 type EntityListReq {
+	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Page       int    `form:"page,default=1"`
 	PageSize   int    `form:"pageSize,default=20"`

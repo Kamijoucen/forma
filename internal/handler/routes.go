@@ -6,6 +6,7 @@ package handler
 import (
 	"net/http"
 
+	app "forma/internal/handler/app"
 	entity "forma/internal/handler/entity"
 	schema "forma/internal/handler/schema"
 	"forma/internal/svc"
@@ -14,6 +15,40 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.AuthMiddleware},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/app/create",
+					Handler: app.AppCreateHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/app/delete",
+					Handler: app.AppDeleteHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/app/detail",
+					Handler: app.AppDetailHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/app/list",
+					Handler: app.AppListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/app/update",
+					Handler: app.AppUpdateHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api"),
+	)
+
 	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.AuthMiddleware},

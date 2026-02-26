@@ -3,34 +3,40 @@ syntax = "v1"
 import "common.api"
 
 type SchemaCreateReq {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaUpdateReq {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 }
 
 type SchemaDeleteReq {
-	Name string `json:"name"`
+	AppCode string `json:"appCode"`
+	Name    string `json:"name"`
 }
 
 type SchemaDetailReq {
-	Name string `form:"name"`
+	AppCode string `form:"appCode"`
+	Name    string `form:"name"`
 }
 
 type SchemaDetailResp {
+	AppCode     string      `json:"appCode"`
 	Name        string      `json:"name"`
-	DisplayName string      `json:"displayName,optional"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
 	CreatedAt   string      `json:"createdAt"`
 	UpdatedAt   string      `json:"updatedAt"`
+}
+
+type SchemaListReq {
+	AppCode string `form:"appCode"`
 }
 
 type SchemaListResp {

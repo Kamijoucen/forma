@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"forma/internal/ent/app"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
@@ -25,8 +26,10 @@ type SchemaDefQuery struct {
 	order             []schemadef.OrderOption
 	inters            []Interceptor
 	predicates        []predicate.SchemaDef
+	withApp           *AppQuery
 	withFieldDefs     *FieldDefQuery
 	withEntityRecords *EntityRecordQuery
+	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,6 +64,28 @@ func (_q *SchemaDefQuery) Unique(unique bool) *SchemaDefQuery {
 func (_q *SchemaDefQuery) Order(o ...schemadef.OrderOption) *SchemaDefQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryApp chains the current query on the "app" edge.
+func (_q *SchemaDefQuery) QueryApp() *AppQuery {
+	query := (&AppClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(schemadef.Table, schemadef.FieldID, selector),
+			sqlgraph.To(app.Table, app.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, schemadef.AppTable, schemadef.AppColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryFieldDefs chains the current query on the "fieldDefs" edge.
@@ -299,12 +324,24 @@ func (_q *SchemaDefQuery) Clone() *SchemaDefQuery {
 		order:             append([]schemadef.OrderOption{}, _q.order...),
 		inters:            append([]Interceptor{}, _q.inters...),
 		predicates:        append([]predicate.SchemaDef{}, _q.predicates...),
+		withApp:           _q.withApp.Clone(),
 		withFieldDefs:     _q.withFieldDefs.Clone(),
 		withEntityRecords: _q.withEntityRecords.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithApp tells the query-builder to eager-load the nodes that are connected to
+// the "app" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *SchemaDefQuery) WithApp(opts ...func(*AppQuery)) *SchemaDefQuery {
+	query := (&AppClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withApp = query
+	return _q
 }
 
 // WithFieldDefs tells the query-builder to eager-load the nodes that are connected to
@@ -406,12 +443,20 @@ func (_q *SchemaDefQuery) prepareQuery(ctx context.Context) error {
 func (_q *SchemaDefQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SchemaDef, error) {
 	var (
 		nodes       = []*SchemaDef{}
+		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
+			_q.withApp != nil,
 			_q.withFieldDefs != nil,
 			_q.withEntityRecords != nil,
 		}
 	)
+	if _q.withApp != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, schemadef.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*SchemaDef).scanValues(nil, columns)
 	}
@@ -430,6 +475,12 @@ func (_q *SchemaDefQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sc
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withApp; query != nil {
+		if err := _q.loadApp(ctx, query, nodes, nil,
+			func(n *SchemaDef, e *App) { n.Edges.App = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withFieldDefs; query != nil {
 		if err := _q.loadFieldDefs(ctx, query, nodes,
 			func(n *SchemaDef) { n.Edges.FieldDefs = []*FieldDef{} },
@@ -447,6 +498,38 @@ func (_q *SchemaDefQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Sc
 	return nodes, nil
 }
 
+func (_q *SchemaDefQuery) loadApp(ctx context.Context, query *AppQuery, nodes []*SchemaDef, init func(*SchemaDef), assign func(*SchemaDef, *App)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*SchemaDef)
+	for i := range nodes {
+		if nodes[i].app_schema_defs == nil {
+			continue
+		}
+		fk := *nodes[i].app_schema_defs
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(app.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "app_schema_defs" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *SchemaDefQuery) loadFieldDefs(ctx context.Context, query *FieldDefQuery, nodes []*SchemaDef, init func(*SchemaDef), assign func(*SchemaDef, *FieldDef)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*SchemaDef)

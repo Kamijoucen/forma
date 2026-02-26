@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"forma/internal/ent/app"
 	"forma/internal/ent/entityrecord"
 	"forma/internal/ent/fielddef"
 	"forma/internal/ent/predicate"
@@ -56,6 +57,17 @@ func (_u *SchemaDefUpdate) ClearDescription() *SchemaDefUpdate {
 	return _u
 }
 
+// SetAppID sets the "app" edge to the App entity by ID.
+func (_u *SchemaDefUpdate) SetAppID(id int) *SchemaDefUpdate {
+	_u.mutation.SetAppID(id)
+	return _u
+}
+
+// SetApp sets the "app" edge to the App entity.
+func (_u *SchemaDefUpdate) SetApp(v *App) *SchemaDefUpdate {
+	return _u.SetAppID(v.ID)
+}
+
 // AddFieldDefIDs adds the "fieldDefs" edge to the FieldDef entity by IDs.
 func (_u *SchemaDefUpdate) AddFieldDefIDs(ids ...int) *SchemaDefUpdate {
 	_u.mutation.AddFieldDefIDs(ids...)
@@ -89,6 +101,12 @@ func (_u *SchemaDefUpdate) AddEntityRecords(v ...*EntityRecord) *SchemaDefUpdate
 // Mutation returns the SchemaDefMutation object of the builder.
 func (_u *SchemaDefUpdate) Mutation() *SchemaDefMutation {
 	return _u.mutation
+}
+
+// ClearApp clears the "app" edge to the App entity.
+func (_u *SchemaDefUpdate) ClearApp() *SchemaDefUpdate {
+	_u.mutation.ClearApp()
+	return _u
 }
 
 // ClearFieldDefs clears all "fieldDefs" edges to the FieldDef entity.
@@ -169,7 +187,18 @@ func (_u *SchemaDefUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *SchemaDefUpdate) check() error {
+	if _u.mutation.AppCleared() && len(_u.mutation.AppIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "SchemaDef.app"`)
+	}
+	return nil
+}
+
 func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(schemadef.Table, schemadef.Columns, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -186,6 +215,35 @@ func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(schemadef.FieldDescription, field.TypeString)
+	}
+	if _u.mutation.AppCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   schemadef.AppTable,
+			Columns: []string{schemadef.AppColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AppIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   schemadef.AppTable,
+			Columns: []string{schemadef.AppColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.FieldDefsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -323,6 +381,17 @@ func (_u *SchemaDefUpdateOne) ClearDescription() *SchemaDefUpdateOne {
 	return _u
 }
 
+// SetAppID sets the "app" edge to the App entity by ID.
+func (_u *SchemaDefUpdateOne) SetAppID(id int) *SchemaDefUpdateOne {
+	_u.mutation.SetAppID(id)
+	return _u
+}
+
+// SetApp sets the "app" edge to the App entity.
+func (_u *SchemaDefUpdateOne) SetApp(v *App) *SchemaDefUpdateOne {
+	return _u.SetAppID(v.ID)
+}
+
 // AddFieldDefIDs adds the "fieldDefs" edge to the FieldDef entity by IDs.
 func (_u *SchemaDefUpdateOne) AddFieldDefIDs(ids ...int) *SchemaDefUpdateOne {
 	_u.mutation.AddFieldDefIDs(ids...)
@@ -356,6 +425,12 @@ func (_u *SchemaDefUpdateOne) AddEntityRecords(v ...*EntityRecord) *SchemaDefUpd
 // Mutation returns the SchemaDefMutation object of the builder.
 func (_u *SchemaDefUpdateOne) Mutation() *SchemaDefMutation {
 	return _u.mutation
+}
+
+// ClearApp clears the "app" edge to the App entity.
+func (_u *SchemaDefUpdateOne) ClearApp() *SchemaDefUpdateOne {
+	_u.mutation.ClearApp()
+	return _u
 }
 
 // ClearFieldDefs clears all "fieldDefs" edges to the FieldDef entity.
@@ -449,7 +524,18 @@ func (_u *SchemaDefUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *SchemaDefUpdateOne) check() error {
+	if _u.mutation.AppCleared() && len(_u.mutation.AppIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "SchemaDef.app"`)
+	}
+	return nil
+}
+
 func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(schemadef.Table, schemadef.Columns, sqlgraph.NewFieldSpec(schemadef.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -483,6 +569,35 @@ func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, er
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(schemadef.FieldDescription, field.TypeString)
+	}
+	if _u.mutation.AppCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   schemadef.AppTable,
+			Columns: []string{schemadef.AppColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AppIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   schemadef.AppTable,
+			Columns: []string{schemadef.AppColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.FieldDefsCleared() {
 		edge := &sqlgraph.EdgeSpec{

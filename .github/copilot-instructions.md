@@ -33,6 +33,15 @@ HTTP Request → Handler（HTTP 关注点） → Logic（业务逻辑） → Ent
 - Service（`internal/service/`）：跨 Logic 复用的公共业务函数，纯函数，不建 struct，如校验、实体转换等
 - ServiceContext：统一管理配置、数据库连接等依赖
 
+### 数据模型
+```
+App 1──N SchemaDef 1──N FieldDef
+                   1──N EntityRecord 1──N EntityFieldValue N──1 FieldDef
+```
+- App：应用标识（code 全局唯一），所有 Schema 必须属于某个 App
+- SchemaDef：数据结构定义，name 在同一 App 下唯一（复合索引 `(name, app)`）
+- 所有 Schema/Entity 接口请求必须携带 `appCode` 参数以确定操作的 App 作用域
+
 ## 工作流
 
 ### 新增 API 端点

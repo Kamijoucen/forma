@@ -22,12 +22,21 @@ const (
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// EdgeApp holds the string denoting the app edge name in mutations.
+	EdgeApp = "app"
 	// EdgeFieldDefs holds the string denoting the fielddefs edge name in mutations.
 	EdgeFieldDefs = "fieldDefs"
 	// EdgeEntityRecords holds the string denoting the entityrecords edge name in mutations.
 	EdgeEntityRecords = "entityRecords"
 	// Table holds the table name of the schemadef in the database.
 	Table = "schema_defs"
+	// AppTable is the table that holds the app relation/edge.
+	AppTable = "schema_defs"
+	// AppInverseTable is the table name for the App entity.
+	// It exists in this package in order to avoid circular dependency with the "app" package.
+	AppInverseTable = "apps"
+	// AppColumn is the table column denoting the app relation/edge.
+	AppColumn = "app_schema_defs"
 	// FieldDefsTable is the table that holds the fieldDefs relation/edge.
 	FieldDefsTable = "field_defs"
 	// FieldDefsInverseTable is the table name for the FieldDef entity.
@@ -53,10 +62,21 @@ var Columns = []string{
 	FieldDescription,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "schema_defs"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"app_schema_defs",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -102,6 +122,13 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
+// ByAppField orders the results by app field.
+func ByAppField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAppStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByFieldDefsCount orders the results by fieldDefs count.
 func ByFieldDefsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -128,6 +155,13 @@ func ByEntityRecords(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newEntityRecordsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
+}
+func newAppStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AppInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, AppTable, AppColumn),
+	)
 }
 func newFieldDefsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
