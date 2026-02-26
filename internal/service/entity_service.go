@@ -15,39 +15,40 @@ import (
 	"github.com/samber/lo"
 )
 
-// ValidateEntityFields 根据 FieldDef 定义校验 FieldValueInput 列表：必填、长度、枚举值等
-// 校验通过后返回 name → *ent.FieldDef 映射，供调用方关联 FieldDef
-func ValidateEntityFields(fieldDefs []*ent.FieldDef, fieldValues []*types.FieldValueInput) (map[string]*ent.FieldDef, error) {
-	// 构建 FieldDef 索引 name → *ent.FieldDef
-	defMap := lo.SliceToMap(fieldDefs, func(fd *ent.FieldDef) (string, *ent.FieldDef) {
+// BuildFieldDefMap 构建 name → *ent.FieldDef 索引映射
+func BuildFieldDefMap(fieldDefs []*ent.FieldDef) map[string]*ent.FieldDef {
+	return lo.SliceToMap(fieldDefs, func(fd *ent.FieldDef) (string, *ent.FieldDef) {
 		return fd.Name, fd
 	})
+}
 
+// ValidateEntityFields 根据 FieldDef 定义校验 FieldValueInput 列表：必填、类型、长度、枚举值等
+func ValidateEntityFields(defMap map[string]*ent.FieldDef, fieldValues []*types.FieldValueInput) error {
 	// 记录已提供的字段名，用于后续必填检查
 	provided := make(map[string]bool, len(fieldValues))
 
 	for _, fv := range fieldValues {
 		def, ok := defMap[fv.Name]
 		if !ok {
-			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 未在Schema中定义", fv.Name)
+			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "字段 %s 未在Schema中定义", fv.Name)
 		}
 
 		// 值校验
 		if err := validateFieldValue(def, fv); err != nil {
-			return nil, err
+			return err
 		}
 
 		provided[fv.Name] = true
 	}
 
 	// 必填字段检查
-	for _, def := range fieldDefs {
+	for _, def := range defMap {
 		if def.Required && !provided[def.Name] {
-			return nil, errorx.NewBizErrorf(errorx.CodeInvalidParam, "必填字段 %s 未提供", def.Name)
+			return errorx.NewBizErrorf(errorx.CodeInvalidParam, "必填字段 %s 未提供", def.Name)
 		}
 	}
 
-	return defMap, nil
+	return nil
 }
 
 // validateFieldValue 根据字段类型校验单个 FieldValueInput

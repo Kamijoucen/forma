@@ -58,9 +58,11 @@ func (l *EntityUpdateLogic) EntityUpdate(req *types.EntityUpdateReq) error {
 		return err
 	}
 
+	// 构建字段索引
+	defMap := service.BuildFieldDefMap(sd.Edges.FieldDefs)
+
 	// 校验字段值
-	defMap, err := service.ValidateEntityFields(sd.Edges.FieldDefs, req.Fields)
-	if err != nil {
+	if err := service.ValidateEntityFields(defMap, req.Fields); err != nil {
 		return err
 	}
 
