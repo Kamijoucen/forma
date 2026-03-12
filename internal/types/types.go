@@ -71,6 +71,7 @@ type EntityDetailResp struct {
 }
 
 type EntityListReq struct {
+	*SortParam
 	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Page       int    `form:"page,default=1"`
@@ -150,4 +151,9 @@ type SchemaUpdateReq struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description,optional"`
 	Fields      []*FieldDef `json:"fields"`
+}
+
+type SortParam struct {
+	Field     string `form:"field,optional"`
+	Direction string `form:"direction,optional,options=asc|desc"` // asc, desc
 }

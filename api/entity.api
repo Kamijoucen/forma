@@ -40,6 +40,7 @@ type EntityDetailResp {
 }
 
 type EntityListReq {
+	*SortParam
 	AppCode    string `form:"appCode"`
 	SchemaName string `form:"schemaName"`
 	Page       int    `form:"page,default=1"`
@@ -47,7 +48,7 @@ type EntityListReq {
 }
 
 type EntityListResp {
-	Total int64              `json:"total"`
+	Total int64               `json:"total"`
 	List  []*EntityDetailResp `json:"list"`
 }
 

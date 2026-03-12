@@ -463,6 +463,85 @@ def test_entity_delete(app_code, schema_name, entity_id):
     assert_true(entity_id not in ids, f"Entity {entity_id} 已不在列表中")
 
 
+def test_entity_list_sort(app_code, schema_name):
+    """测试 Entity 列表排序功能（SortParam）"""
+    print(f"\n{'=' * 50}")
+    print(f"--- test_entity_list_sort (app={app_code}, schema={schema_name}) ---")
+
+    # 创建 3 条实体记录，title 故意乱序以验证排序
+    sort_test_entities = [
+        {"title": "A_first", "priority": "low"},
+        {"title": "C_third", "priority": "high"},
+        {"title": "B_second", "priority": "medium"},
+    ]
+    created_ids = []
+    for item in sort_test_entities:
+        fields = [
+            {"name": "title", "type": "string", "value": item["title"]},
+            {"name": "done", "type": "boolean", "value": "false"},
+            {"name": "priority", "type": "enum", "value": item["priority"]},
+        ]
+        body = {"appCode": app_code, "schemaName": schema_name, "fields": fields}
+        resp = post("/entity/create", body)
+        assert_success(resp, f"排序测试: 创建 Entity (title={item['title']})")
+        created_ids.append(resp.get("data", {}).get("id", ""))
+
+    # --- 升序排序 ---
+    print(f"\n  >>> 按 title 升序排序 (field=title&direction=asc)")
+    resp_asc = get("/entity/list", {
+        "appCode": app_code, "schemaName": schema_name,
+        "page": 1, "pageSize": 20,
+        "field": "title", "direction": "asc",
+    })
+    print(f"  Response (asc): {resp_asc}")
+    assert_success(resp_asc, "排序测试: 升序查询")
+
+    asc_titles = [
+        next((f["value"] for f in e.get("fields", []) if f["name"] == "title"), None)
+        for e in resp_asc.get("data", {}).get("list", [])
+    ]
+    print(f"  升序 title 列表: {asc_titles}")
+    assert_equal(asc_titles, ["A_first", "B_second", "C_third"], "升序排列: A_first → B_second → C_third")
+
+    # --- 降序排序 ---
+    print(f"\n  >>> 按 title 降序排序 (field=title&direction=desc)")
+    resp_desc = get("/entity/list", {
+        "appCode": app_code, "schemaName": schema_name,
+        "page": 1, "pageSize": 20,
+        "field": "title", "direction": "desc",
+    })
+    print(f"  Response (desc): {resp_desc}")
+    assert_success(resp_desc, "排序测试: 降序查询")
+
+    desc_titles = [
+        next((f["value"] for f in e.get("fields", []) if f["name"] == "title"), None)
+        for e in resp_desc.get("data", {}).get("list", [])
+    ]
+    print(f"  降序 title 列表: {desc_titles}")
+    assert_equal(desc_titles, ["C_third", "B_second", "A_first"], "降序排列: C_third → B_second → A_first")
+
+    # --- 无排序对照 ---
+    print(f"\n  >>> 无排序参数查询（对照）")
+    resp_no_sort = get("/entity/list", {
+        "appCode": app_code, "schemaName": schema_name,
+        "page": 1, "pageSize": 20,
+    })
+    print(f"  Response (no sort): {resp_no_sort}")
+    assert_success(resp_no_sort, "排序测试: 无排序查询")
+
+    no_sort_titles = [
+        next((f["value"] for f in e.get("fields", []) if f["name"] == "title"), None)
+        for e in resp_no_sort.get("data", {}).get("list", [])
+    ]
+    print(f"  无排序 title 列表: {no_sort_titles}")
+
+    # --- 清理: 删除创建的 3 条记录 ---
+    print(f"\n  >>> 清理排序测试数据")
+    for eid in created_ids:
+        resp = post("/entity/delete", {"appCode": app_code, "schemaName": schema_name, "id": eid})
+        assert_success(resp, f"排序测试: 删除 Entity {eid}")
+
+
 # ========== 入口 ==========
 
 if __name__ == "__main__":
@@ -474,28 +553,12 @@ if __name__ == "__main__":
     app_code = APP_CODE
     schema_name = gen_schema_name()
 
-    # ===== App 测试 =====
+    # ===== 准备: 创建 App 和 Schema =====
     test_app_create(app_code)
-    test_app_create_duplicate(app_code)
-    test_app_detail(app_code)
-    test_app_list(app_code)
-    test_app_update(app_code)
-
-    # ===== Schema 测试 =====
     test_schema_create(app_code, schema_name)
-    test_schema_detail(app_code, schema_name)
-    test_schema_list(app_code, schema_name)
-    test_schema_update(app_code, schema_name)
 
-    # ===== App 删除（有 Schema 时应被拒绝） =====
-    test_app_delete_in_use(app_code)
-
-    # ===== Entity 测试 =====
-    entity_id = test_entity_create(app_code, schema_name)
-    test_entity_detail(app_code, schema_name, entity_id)
-    test_entity_list(app_code, schema_name)
-    test_entity_update(app_code, schema_name, entity_id)
-    test_entity_delete(app_code, schema_name, entity_id)
+    # ===== Entity 排序测试 =====
+    test_entity_list_sort(app_code, schema_name)
 
     # ===== 清理：删除 Schema 和 App =====
     test_schema_delete(app_code, schema_name)

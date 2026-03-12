@@ -34,7 +34,7 @@
         {
             "label": "gen-orm",
             "type": "shell",
-            "command": "go run -mod=mod entgo.io/ent/cmd/ent generate --feature sql/upsert ./ent/schema",
+            "command": "go run -mod=mod entgo.io/ent/cmd/ent generate --feature sql/upsert --feature sql/modifier ./ent/schema",
             "options": {
                 "cwd": "${workspaceFolder}/internal"
             },

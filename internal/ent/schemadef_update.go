@@ -21,8 +21,9 @@ import (
 // SchemaDefUpdate is the builder for updating SchemaDef entities.
 type SchemaDefUpdate struct {
 	config
-	hooks    []Hook
-	mutation *SchemaDefMutation
+	hooks     []Hook
+	mutation  *SchemaDefMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the SchemaDefUpdate builder.
@@ -195,6 +196,12 @@ func (_u *SchemaDefUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *SchemaDefUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SchemaDefUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -335,6 +342,7 @@ func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{schemadef.Label}
@@ -350,9 +358,10 @@ func (_u *SchemaDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // SchemaDefUpdateOne is the builder for updating a single SchemaDef entity.
 type SchemaDefUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *SchemaDefMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *SchemaDefMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdateTime sets the "update_time" field.
@@ -532,6 +541,12 @@ func (_u *SchemaDefUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *SchemaDefUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SchemaDefUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -689,6 +704,7 @@ func (_u *SchemaDefUpdateOne) sqlSave(ctx context.Context) (_node *SchemaDef, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &SchemaDef{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

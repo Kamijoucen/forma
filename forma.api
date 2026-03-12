@@ -8,67 +8,67 @@ import (
 
 @server (
 	group:      app
-	prefix:     /api
+	prefix:     /api/app
 	middleware: AuthMiddleware
 )
 service forma-api {
 	@handler AppCreateHandler
-	post /app/create (AppCreateReq) returns (AppCreateResp)
+	post /create (AppCreateReq) returns (AppCreateResp)
 
 	@handler AppUpdateHandler
-	post /app/update (AppUpdateReq)
+	post /update (AppUpdateReq)
 
 	@handler AppDeleteHandler
-	post /app/delete (AppDeleteReq)
+	post /delete (AppDeleteReq)
 
 	@handler AppDetailHandler
-	get /app/detail (AppDetailReq) returns (AppDetailResp)
+	get /detail (AppDetailReq) returns (AppDetailResp)
 
 	@handler AppListHandler
-	get /app/list returns (AppListResp)
+	get /list returns (AppListResp)
 }
 
 @server (
 	group:      schema
-	prefix:     /api
+	prefix:     /api/schema
 	middleware: AuthMiddleware
 )
 service forma-api {
 	@handler SchemaCreateHandler
-	post /schema/create (SchemaCreateReq)
+	post /create (SchemaCreateReq)
 
 	@handler SchemaUpdateHandler
-	post /schema/update (SchemaUpdateReq)
+	post /update (SchemaUpdateReq)
 
 	@handler SchemaDeleteHandler
-	post /schema/delete (SchemaDeleteReq)
+	post /delete (SchemaDeleteReq)
 
 	@handler SchemaDetailHandler
-	get /schema/detail (SchemaDetailReq) returns (SchemaDetailResp)
+	get /detail (SchemaDetailReq) returns (SchemaDetailResp)
 
 	@handler SchemaListHandler
-	get /schema/list (SchemaListReq) returns (SchemaListResp)
+	get /list (SchemaListReq) returns (SchemaListResp)
 }
 
 @server (
 	group:      entity
-	prefix:     /api
+	prefix:     /api/entity
 	middleware: AuthMiddleware
 )
 service forma-api {
 	@handler EntityCreateHandler
-	post /entity/create (EntityCreateReq) returns (EntityCreateResp)
+	post /create (EntityCreateReq) returns (EntityCreateResp)
 
 	@handler EntityUpdateHandler
-	post /entity/update (EntityUpdateReq)
+	post /update (EntityUpdateReq)
 
 	@handler EntityDeleteHandler
-	post /entity/delete (EntityDeleteReq)
+	post /delete (EntityDeleteReq)
 
 	@handler EntityDetailHandler
-	get /entity/detail (EntityDetailReq) returns (EntityDetailResp)
+	get /detail (EntityDetailReq) returns (EntityDetailResp)
 
 	@handler EntityListHandler
-	get /entity/list (EntityListReq) returns (EntityListResp)
+	get /list (EntityListReq) returns (EntityListResp)
 }
 

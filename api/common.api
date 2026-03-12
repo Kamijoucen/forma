@@ -24,3 +24,8 @@ type FieldValue {
 	Value string `json:"value"`
 }
 
+// 排序参数
+type SortParam {
+    Field     string `form:"field,optional"`
+    Direction string `form:"direction,optional,options=asc|desc"` // asc, desc
+}

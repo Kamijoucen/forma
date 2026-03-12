@@ -25,6 +25,7 @@ type AppQuery struct {
 	inters         []Interceptor
 	predicates     []predicate.App
 	withSchemaDefs *SchemaDefQuery
+	modifiers      []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -277,8 +278,9 @@ func (_q *AppQuery) Clone() *AppQuery {
 		predicates:     append([]predicate.App{}, _q.predicates...),
 		withSchemaDefs: _q.withSchemaDefs.Clone(),
 		// clone intermediate query.
-		sql:  _q.sql.Clone(),
-		path: _q.path,
+		sql:       _q.sql.Clone(),
+		path:      _q.path,
+		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
 }
 
@@ -384,6 +386,9 @@ func (_q *AppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*App, err
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -437,6 +442,9 @@ func (_q *AppQuery) loadSchemaDefs(ctx context.Context, query *SchemaDefQuery, n
 
 func (_q *AppQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
+	}
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
 		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
@@ -499,6 +507,9 @@ func (_q *AppQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range _q.modifiers {
+		m(selector)
+	}
 	for _, p := range _q.predicates {
 		p(selector)
 	}
@@ -514,6 +525,12 @@ func (_q *AppQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (_q *AppQuery) Modify(modifiers ...func(s *sql.Selector)) *AppSelect {
+	_q.modifiers = append(_q.modifiers, modifiers...)
+	return _q.Select()
 }
 
 // AppGroupBy is the group-by builder for App entities.
@@ -604,4 +621,10 @@ func (_s *AppSelect) sqlScan(ctx context.Context, root *AppQuery, v any) error {
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
+}
+
+// Modify adds a query modifier for attaching custom logic to queries.
+func (_s *AppSelect) Modify(modifiers ...func(s *sql.Selector)) *AppSelect {
+	_s.modifiers = append(_s.modifiers, modifiers...)
+	return _s
 }

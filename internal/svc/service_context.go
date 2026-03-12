@@ -51,7 +51,7 @@ func initDB(c config.Config) *ent.Client {
 		panic(err)
 	}
 
-	client, err := ent.Open(dialect.Postgres, dsn)
+	client, err := ent.Open(dialect.Postgres, dsn, ent.Debug())
 	if err != nil {
 		logx.Errorf("init db failed, driver=%s err=%v", driver, err)
 		panic(err)

@@ -21,8 +21,9 @@ import (
 // FieldDefUpdate is the builder for updating FieldDef entities.
 type FieldDefUpdate struct {
 	config
-	hooks    []Hook
-	mutation *FieldDefMutation
+	hooks     []Hook
+	mutation  *FieldDefMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the FieldDefUpdate builder.
@@ -233,6 +234,12 @@ func (_u *FieldDefUpdate) defaults() {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *FieldDefUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FieldDefUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(fielddef.Table, fielddef.Columns, sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
@@ -351,6 +358,7 @@ func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{fielddef.Label}
@@ -366,9 +374,10 @@ func (_u *FieldDefUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // FieldDefUpdateOne is the builder for updating a single FieldDef entity.
 type FieldDefUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *FieldDefMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *FieldDefMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetUpdateTime sets the "update_time" field.
@@ -586,6 +595,12 @@ func (_u *FieldDefUpdateOne) defaults() {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *FieldDefUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FieldDefUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err error) {
 	_spec := sqlgraph.NewUpdateSpec(fielddef.Table, fielddef.Columns, sqlgraph.NewFieldSpec(fielddef.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
@@ -721,6 +736,7 @@ func (_u *FieldDefUpdateOne) sqlSave(ctx context.Context) (_node *FieldDef, err 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &FieldDef{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

@@ -21,32 +21,32 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Route{
 				{
 					Method:  http.MethodPost,
-					Path:    "/app/create",
+					Path:    "/create",
 					Handler: app.AppCreateHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/app/delete",
+					Path:    "/delete",
 					Handler: app.AppDeleteHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/app/detail",
+					Path:    "/detail",
 					Handler: app.AppDetailHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/app/list",
+					Path:    "/list",
 					Handler: app.AppListHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/app/update",
+					Path:    "/update",
 					Handler: app.AppUpdateHandler(serverCtx),
 				},
 			}...,
 		),
-		rest.WithPrefix("/api"),
+		rest.WithPrefix("/api/app"),
 	)
 
 	server.AddRoutes(
@@ -55,32 +55,32 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Route{
 				{
 					Method:  http.MethodPost,
-					Path:    "/entity/create",
+					Path:    "/create",
 					Handler: entity.EntityCreateHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/entity/delete",
+					Path:    "/delete",
 					Handler: entity.EntityDeleteHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/entity/detail",
+					Path:    "/detail",
 					Handler: entity.EntityDetailHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/entity/list",
+					Path:    "/list",
 					Handler: entity.EntityListHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/entity/update",
+					Path:    "/update",
 					Handler: entity.EntityUpdateHandler(serverCtx),
 				},
 			}...,
 		),
-		rest.WithPrefix("/api"),
+		rest.WithPrefix("/api/entity"),
 	)
 
 	server.AddRoutes(
@@ -89,31 +89,31 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Route{
 				{
 					Method:  http.MethodPost,
-					Path:    "/schema/create",
+					Path:    "/create",
 					Handler: schema.SchemaCreateHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/schema/delete",
+					Path:    "/delete",
 					Handler: schema.SchemaDeleteHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/schema/detail",
+					Path:    "/detail",
 					Handler: schema.SchemaDetailHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodGet,
-					Path:    "/schema/list",
+					Path:    "/list",
 					Handler: schema.SchemaListHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,
-					Path:    "/schema/update",
+					Path:    "/update",
 					Handler: schema.SchemaUpdateHandler(serverCtx),
 				},
 			}...,
 		),
-		rest.WithPrefix("/api"),
+		rest.WithPrefix("/api/schema"),
 	)
 }
