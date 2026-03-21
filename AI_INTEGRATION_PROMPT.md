@@ -470,10 +470,11 @@ GET /api/entity/detail?appCode=my_todo_app&schemaName=todo_item&id=1
 }
 ```
 
-#### 查询 Entity 列表（分页）
+#### 查询 Entity 列表（分页 + 排序）
 
 ```
 GET /api/entity/list?appCode=my_todo_app&schemaName=todo_item&page=1&pageSize=20
+GET /api/entity/list?appCode=my_todo_app&schemaName=todo_item&page=1&pageSize=20&field=priority&direction=desc
 ```
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -482,6 +483,10 @@ GET /api/entity/list?appCode=my_todo_app&schemaName=todo_item&page=1&pageSize=20
 | schemaName | string | — | 必填 |
 | page | int | 1 | 页码 |
 | pageSize | int | 20 | 每页条数 |
+| field | string | — | 可选，排序字段名（必须是 Schema 中已定义的字段） |
+| direction | string | asc | 可选，排序方向：`asc`（升序）或 `desc`（降序） |
+
+> **排序说明**：不传 `field` 时不排序。使用排序时 `field` 必须是 Schema 中已定义的字段名，`direction` 可省略（默认升序）。
 
 ```json
 // 成功响应
@@ -629,7 +634,12 @@ curl -X POST http://localhost:8888/api/entity/create \
 ### Step 4：查询列表
 
 ```bash
+# 基本分页查询
 curl -X GET "http://localhost:8888/api/entity/list?appCode=todo_app&schemaName=todo_item&page=1&pageSize=20" \
+  -H "Authorization: your-token"
+
+# 按 priority 降序排序
+curl -X GET "http://localhost:8888/api/entity/list?appCode=todo_app&schemaName=todo_item&page=1&pageSize=20&field=priority&direction=desc" \
   -H "Authorization: your-token"
 ```
 
@@ -681,4 +691,5 @@ curl -X POST http://localhost:8888/api/entity/delete \
 - [ ] 所有字段值以**字符串**形式传递
 - [ ] 请求头包含 `Authorization: <token>`
 - [ ] POST 请求设置了 `Content-Type: application/json`
+- [ ] 使用排序功能时，`field` 值必须是 Schema 中已定义的字段名
 - [ ] 响应判断使用 `code == "200"` 而非 HTTP 状态码
